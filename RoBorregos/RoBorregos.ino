@@ -1,11 +1,11 @@
   // - Dist Sensors Trigger------------------------------------------- 
-  int FrontDistSensorTrigger;
-  int LeftDistSensorTrigger;
-  int RightDistSensorTrigger;
+  #define FrontDistSensorTrigger 2
+  #define LeftDistSensorTrigger 3
+  #define RightDistSensorTrigger 4
   // - Dist Sensors Echo-------------------------------------------
-  int FrontDistSensorEcho;
-  int LeftDistSensorEcho;
-  int RightDistSensorEcho;
+  #define FrontDistSensorEcho 22
+  #define LeftDistSensorEcho 24
+  #define RightDistSensorEcho 26
 
 int findDistance(int triggerPin, int echoPin)
 {
@@ -18,17 +18,13 @@ int findDistance(int triggerPin, int echoPin)
   return distance;
 }  
 void setup() {
-  // - Dist Sensors Trigger------------------------------------------- 
-  FrontDistSensorTrigger;
-  LeftDistSensorTrigger;
-  RightDistSensorTrigger;
-  // - Dist Sensors Echo-------------------------------------------
-  FrontDistSensorEcho;
-  LeftDistSensorEcho;
-  RightDistSensorEcho;
   // - InfraRedSensors
   int NInfraRedSensor;
-  int InfraRedSensors[NInfraRedSensor];
+  
+  int InfraRedSensors[] = {23, 25, 27, 29, 31};
+  for (int i = 0; i < NInfraRedSensor; i++){
+    pinmode(InfraredSensors[i] ,INPUT);
+  }
   bool InfraRedValues[NInfraRedSensor];
   // -  
 
@@ -47,7 +43,7 @@ int RightDistance(){
 
 void loop() {
   int margin = 15;
-  if(RightDistance() <margin){
+  if(RightDistance() < margin){
     // Left
   }else if(LeftDistance() < margin){
     //Right
