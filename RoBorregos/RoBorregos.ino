@@ -16,6 +16,13 @@
     #define FrontDistSensorEcho 22
     #define LeftDistSensorEcho 24
     #define RightDistSensorEcho 26
+  // - Motors
+    #define RightA
+    #define RightB
+    #define RightPow
+    #define LeftA
+    #define LeftB
+    #define LeftPow
 
 int findDistance(int triggerPin, int echoPin)
 {
@@ -42,6 +49,44 @@ void SetColor(){
   analogWrite(RGBBlueOutPut, gammatable[(int)blue]);
 }
 
+void Drive(int left, int right){
+  //Set Motor Direction
+  if(left > 0){
+    digitalWrite(LeftA, HIGH);
+    digitalWrite(LeftB, LOW);
+  }else if(left < 0){
+    digitalWrite(LeftA, LOW);
+    digitalWrite(LeftB, HIGH);
+  }
+  else{
+    digitalWrite(LeftA, LOW);
+    digitalWrite(LeftB, LOW);
+  }
+
+  if(right > 0){
+    digitalWrite(RightA, HIGH);
+    digitalWrite(RightB, LOW);
+  }else if(right < 0){
+    digitalWrite(RightA, LOW);
+    digitalWrite(RightB, HIGH);
+  }
+  else{
+    digitalWrite(RightA, LOW);
+    digitalWrite(RightB, LOW);
+  }
+
+  //Set Motor Velocity
+  left = abs(left);
+  right = abs(right);
+  left = left > 1 ? 1: left;
+  right = right > 1 ? 1: right;
+
+  int leftWheel = map(left, 0, 1, 0, 255);
+  int rightWheel = map(right, 0, 1, 0, 255);
+  analogWrite(LeftPow, leftWheel);
+  analogWrite(RightPow, RightWheel);
+}
+
 
 void setup() {
   // - InfraRedSensors
@@ -66,6 +111,8 @@ void setup() {
             gammatable[i] = 255 - x;
           }
           Serial.println(gammatable[i]);
+  // - Big Color Sensor
+  
 
 }
 
@@ -83,11 +130,11 @@ void loop() {
   int margin = 15;
   SetColor();
   if(RightDistance() < margin){
-    // Left
+    Drive(-1,1);
   }else if(LeftDistance() < margin){
-    //Right
+    Drive(1,-1);
   }else if(FrontDistance() < margin) {
-    //Front
+    Drive(-1,-1);
   }
 
 
