@@ -1,4 +1,4 @@
-  //Librerias
+  //Pre - Setup
   // - Small Color Sensor
     #include <Wire.h>
     #include "Adafruit_TCS34725.h"
@@ -23,6 +23,20 @@
     #define LeftA
     #define LeftB
     #define LeftPow
+  // - Encoders
+    int pulses_per_turn = 20;
+    //-Right
+    #define RightEncoder 5
+    volatile byte RightPulses;
+    void Rcount(){RightPulses++}
+    //-Left
+    #define LeftEncoder 8
+    volatile byte LeftPulses;
+    void Lcount(){LeftPulses++}
+  //
+
+
+
 
 int findDistance(int triggerPin, int echoPin)
 {
@@ -98,7 +112,7 @@ void setup() {
           bool InfraRedValues[NInfraRedSensor];
 
 
-  // -  Small Color Sensor
+  // - Small Color Sensor
           pinMode(RGBRedOutPut, OUTPUT);
           pinMode(RGBGreenOutPut, OUTPUT);
           pinMode(RGBBlueOutPut, OUTPUT);
@@ -112,7 +126,11 @@ void setup() {
           }
           Serial.println(gammatable[i]);
   // - Big Color Sensor
-  
+  // - Encoders
+      pinMode(RightEncoder, INPUT);
+      pinMode(LeftEncoder, INPUT);
+      attachInterrupt(digitalPinToInterrupt(RightEncoder), Rcount, FALLING );
+      attachInterrupt(digitalPinToInterrupt(LeftEncoder), Lcount, FALLING );
 
 }
 
