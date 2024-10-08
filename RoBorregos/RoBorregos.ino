@@ -38,14 +38,14 @@
 
 
 
-int findDistance(int triggerPin, int echoPin)
+long findDistance(int triggerPin, int echoPin)
 {
   pinMode(triggerPin, OUTPUT);  
   digitalWrite(triggerPin, HIGH);
   delayMicroseconds(5);
   digitalWrite(triggerPin, LOW);
   pinMode(echoPin, INPUT);
-  int distance = pulseIn(echoPin, HIGH)/58.2;
+  long distance = pulseIn(echoPin, HIGH)/58.2;
   return distance;
 } 
 
@@ -113,6 +113,7 @@ void GoFront(){
   while(LeftPulses < blockDist || RightPulses < blockDist){
     int RightError = (blockDist - RightPulses) ;
     int LeftError = (blockDist - LeftPulses);
+    //El error puede ser cambiado entre calcular la distancia hacia la pared o nomas con los encoders
 
     if(LeftPulses < blockDist && RightPulses < blockDist){
       Drive(1,1);
@@ -162,13 +163,13 @@ void setup() {
 
 }
 
-int FrontDistance(){
+long FrontDistance(){
   return findDistance(FrontDistSensorTrigger, FrontDistSensorEcho);
 }
-int LeftDistance(){
+long LeftDistance(){
   return findDistance(LeftDistSensorTrigger, LeftDistSensorEcho);
 }
-int RightDistance(){
+long RightDistance(){
   return findDistance(RightDistSensorTrigger, RightDistSensorEcho);
 }
 
