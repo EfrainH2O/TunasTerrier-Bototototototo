@@ -2,7 +2,7 @@
   // - Small Color Sensor
     #include <Wire.h>
     #include "Adafruit_TCS34725.h"
-    #define RGBRedOutPut 3
+    #define RGBRedOutPut 7
     #define RGBGreenOutPut 5
     #define RGBBlueOutPut 6
     #define commonAnode true
@@ -17,22 +17,22 @@
     #define LeftDistSensorEcho 24
     #define RightDistSensorEcho 26
   // - Motors
-    #define RightA
-    #define RightB
-    #define RightPow
-    #define LeftA
-    #define LeftB
-    #define LeftPow
+    #define RightA 20
+    #define RightB 21
+    #define RightPow A5
+    #define LeftA 22 
+    #define LeftB 23
+    #define LeftPow A6
   // - Encoders
     int pulses_per_turn = 20;
     //-Right
-    #define RightEncoder 5
+    #define RightEncoder 15
     volatile byte RightPulses;
-    void Rcount(){RightPulses++}
+    void Rcount(){RightPulses++;}
     //-Left
-    #define LeftEncoder 8
+    #define LeftEncoder 14
     volatile byte LeftPulses;
-    void Lcount(){LeftPulses++}
+    void Lcount(){LeftPulses++;}
   //
 
 
@@ -95,11 +95,37 @@ void Drive(int left, int right){
   left = left > 1 ? 1: left;
   right = right > 1 ? 1: right;
 
-  int leftWheel = map(left, 0, 1, 0, 255);
-  int rightWheel = map(right, 0, 1, 0, 255);
-  analogWrite(LeftPow, leftWheel);
+  int LeftWheel = map(left, 0, 1, 0, 255);
+  int RightWheel = map(right, 0, 1, 0, 255);
+  analogWrite(LeftPow, LeftWheel);
   analogWrite(RightPow, RightWheel);
 }
+
+
+
+void GoFront(){
+  LeftPulses = 0;
+  RightPulses = 0;
+  int blockDist = 15000;   //Ponemos operaciones para ponerlo en terminos de bloques
+  int RightError ;
+  int LeftError ;
+  int kp = 0.1;
+  while(LeftPulses < blockDist || RightPulses < blockDist){
+    int RightError = (blockDist - RightPulses) ;
+    int LeftError = (blockDist - LeftPulses);
+
+    if(LeftPulses < blockDist && RightPulses < blockDist){
+      Drive(1,1);
+    }
+    else if(LeftPulses < blockDist){
+      Drive(kp*RightError,0);
+    }else{
+      Drive(0,kp*LeftError);
+    }
+  }
+  //Delay(5000)
+}
+
 
 
 void setup() {
@@ -107,7 +133,7 @@ void setup() {
           int NInfraRedSensor;
           int InfraRedSensors[] = {23, 25, 27, 29, 31};
                       for (int i = 0; i < NInfraRedSensor; i++){
-                        pinmode(InfraredSensors[i] ,INPUT);
+                        pinMode(InfraRedSensors[i] ,INPUT);
                       }
           bool InfraRedValues[NInfraRedSensor];
 
@@ -123,12 +149,14 @@ void setup() {
             x = pow(x, 2.5);
             x *= 255;
             gammatable[i] = 255 - x;
+            Serial.println(gammatable[i]);
           }
-          Serial.println(gammatable[i]);
+          
   // - Big Color Sensor
   // - Encoders
       pinMode(RightEncoder, INPUT);
       pinMode(LeftEncoder, INPUT);
+      //Verifiquemos si esto afecta negativamente el rendimiento
       attachInterrupt(digitalPinToInterrupt(RightEncoder), Rcount, FALLING );
       attachInterrupt(digitalPinToInterrupt(LeftEncoder), Lcount, FALLING );
 
@@ -153,6 +181,8 @@ void loop() {
     Drive(1,-1);
   }else if(FrontDistance() < margin) {
     Drive(-1,-1);
+  }else{
+    GoFront();
   }
 
 
