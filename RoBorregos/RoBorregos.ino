@@ -1,10 +1,32 @@
     //Pre - Setup
+    // - LED RGB
+      #define ledRojo 13
+      #define ledVerde 14
+      #define ledAzul 15
+    // - 4 LEDs Color Sensor
+      #define S0 8
+      #define S1 9
+      #define S2 10
+      #define S3 11
+      #define SensorOut 12
+      // Calibration Values
+        int redMin = 0; // Red minimum value
+        int redMax = 0; // Red maximum value
+        int greenMin = 0; // Green minimum value
+        int greenMax = 0; // Green maximum value
+        int blueMin = 0; // Blue minimum value
+        int blueMax = 0; // Blue maximum value
+      // Variables for Color Pulse Width Measurements
+        int redPW = 0;
+        int greenPW = 0;
+        int bluePW = 0;
+      // Variables for final Color values
+        int redValue;
+        int greenValue;
+        int blueValue;
     // - Small Color Sensor
       #include <Wire.h>
       #include "Adafruit_TCS34725.h"
-      #define RGBRedOutPut 7
-      #define RGBGreenOutPut 5
-      #define RGBBlueOutPut 6
       #define commonAnode true
       byte gammatable[256];
       Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_4X);
@@ -38,7 +60,84 @@
       int InfraRedSensors[] = {23, 25, 27, 29, 31};
       bool InfraRedValues[NInfraRedSensor];
 
+  void calibraSensorRGB(){
+    // Lee el ancho de pulso de ROJO
+    redPW = getRedPW();
+    delay(200);
+    // Lee el ancho de pulso de VERDE
+    greenPW = getGreenPW();
+    delay(200);
+    // Lee el ancho de pulso de AZUL
+    bluePW = getBluePW();
+    delay(200);
+    // Imprimir los valores en el Serial Monitor
+    Serial.print("Red PW = ");
+    Serial.print(redPW);
+    Serial.print(" - Green PW = ");
+    Serial.print(greenPW);
+    Serial.print(" - Blue PW = ");
+    Serial.print(bluePW);
+  }
 
+  void leeSensorRGB(){
+    // Deten el Robot
+    Drive(0,0);
+    // Lee el ancho de pulso de ROJO
+    redPW = getRedPW();
+    // Mapea el valor desde 0-255
+    redValue = map(redPW, redMin, redMax, 255, 0);
+    delay(200);
+    // Lee el ancho de pulso de VERDE
+    greenPW = getGreenPW();
+    // Mapea el valor desde 0-255
+    greenValue = map(greenPW, greenMin, greenMax, 255, 0);
+    delay(200);
+    // Lee el ancho de pulso de AZUL
+    bluePW = getBluePW();
+    // Mapea el valor desde 0-255
+    blueValue = map(bluePW, blueMin, blueMax, 255, 0);
+    delay(200);
+    //
+    ejecutaLedRGB(redValue, greenValue, blueValue);
+    Drive(1,1);
+  }
+
+int getRedPW(){
+  // Ajustar el sensor a leer unicamente ROJO
+  digitalWrite(S2, LOW);
+  digitalWrite(S3, LOW);
+  int PW;
+  // Lee la salida del ancho de pulso
+  PW = pulseIn(SensorOut, LOW);
+  return PW; // Regresar el valor obtenido
+}
+
+int getGreenPW(){
+  // Ajustar el sensor a leer unicamente VERDE
+  digitalWrite(S2, HIGH);
+  digitalWrite(S3, HIGH);
+  int PW;
+  // Lee la salida del ancho de pulso
+  PW = pulseIn(SensorOut, LOW);
+  return PW; // Regresar el valor obtenido
+}
+
+int getBluePW(){
+  // Ajustar el sensor a leer unicamente AZUL
+  digitalWrite(S2, LOW);
+  digitalWrite(S3, HIGH);
+  int PW;
+  // Lee la salida del ancho de pulso
+  PW = pulseIn(SensorOut, LOW);
+  return PW; // Regresar el valor obtenido
+}
+
+void ejecutaLedRGB(int R, int G, int B){
+  digitalWrite(ledRojo, R); // Pasar el valor obtenido de ROJO al led RGB
+  digitalWrite(ledVerde, G); // Pasar el valor obtenido de VERDE al led RGB
+  digitalWrite(ledAzul, B);  // Pasar el valor obtenido de AZUL al led RGB
+  delay(1500);
+}
 
   long findDistance(int triggerPin, int echoPin)
   {
@@ -57,12 +156,9 @@
     delay(60);  
     tcs.getRGB(&red, &green, &blue);
     tcs.setInterrupt(true);  
-
+    
     //Funcion para redondear a colores cercanos
 
-    analogWrite(RGBRedOutPut, gammatable[(int)red]);
-    analogWrite(RGBGreenOutPut, gammatable[(int)green]);
-    analogWrite(RGBBlueOutPut, gammatable[(int)blue]);
   }
 
   void Drive(int left, int right){
@@ -163,11 +259,11 @@
           pinMode(InfraRedSensors[i] ,INPUT);
         }
 
-
+    // - LED RGB
+        pinMode(ledRojo, OUTPUT);
+        pinMode(ledVerde, OUTPUT);
+        pinMode(ledAzul, OUTPUT);
     // - Small Color Sensor
-        pinMode(RGBRedOutPut, OUTPUT);
-        pinMode(RGBGreenOutPut, OUTPUT);
-        pinMode(RGBBlueOutPut, OUTPUT);
 
         for (int i=0; i<256; i++) {
           float x = i;
@@ -178,14 +274,23 @@
           Serial.println(gammatable[i]);
         }
             
-    // - Big Color Sensor
+    // - 4 LEDs Color Sensor
+        pinMode(S0, OUTPUT);
+        pinMode(S1, OUTPUT);
+        pinMode(S2, OUTPUT);
+        pinMode(S3, OUTPUT);
+        pinMode(SensorOut, INPUT);
+        // Ajustar el escalado de frecuencia a 20%
+        digitalWrite(S0, HIGH);
+        digitalWrite(S1, LOW);
     // - Encoders
         pinMode(RightEncoder, INPUT);
         pinMode(LeftEncoder, INPUT);
         //Verifiquemos si esto afecta negativamente el rendimiento
         attachInterrupt(digitalPinToInterrupt(RightEncoder), Rcount, FALLING );
         attachInterrupt(digitalPinToInterrupt(LeftEncoder), Lcount, FALLING );
-
+    // General Setup
+        Serial.begin(9600);
   }
 
 
@@ -202,6 +307,7 @@
     }else{
       GoFront();
     }
+
 
 
   }
