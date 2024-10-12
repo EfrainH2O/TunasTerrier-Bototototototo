@@ -16,14 +16,6 @@
         int greenMax = 0; // Green maximum value
         int blueMin = 0; // Blue minimum value
         int blueMax = 0; // Blue maximum value
-      // Variables for Color Pulse Width Measurements
-        int redPW = 0;
-        int greenPW = 0;
-        int bluePW = 0;
-      // Variables for final Color values
-        int redValue;
-        int greenValue;
-        int blueValue;
     // - Small Color Sensor
       #include <Wire.h>
       #include "Adafruit_TCS34725.h"
@@ -63,6 +55,10 @@
       #define servoLeft 9
 
 void calibraSensorRGB(){
+  // Variables para la Medida del Ancho de Pulso de Color
+  int redPW = 0;
+  int greenPW = 0;
+  int bluePW = 0;
   // Lee el ancho de pulso de ROJO
   redPW = getRedPW();
   delay(200);
@@ -82,7 +78,14 @@ void calibraSensorRGB(){
 }
 
 void leeSensorRGB(){
-
+  // Variables para la Medida del Ancho de Pulso de Color
+  int redPW = 0;
+  int greenPW = 0;
+  int bluePW = 0;
+  // Variables para el Valor Final del Color
+  int redValue;
+  int greenValue;
+  int blueValue;
   // Lee el ancho de pulso de ROJO
   redPW = getRedPW();
   // Mapea el valor desde 0-255
