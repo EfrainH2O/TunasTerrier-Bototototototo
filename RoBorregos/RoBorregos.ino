@@ -1,4 +1,4 @@
-    //Pre - Setup
+  //Pre - Setup
     // - LED RGB
       #define ledRojo 41
       #define ledVerde 43
@@ -20,7 +20,7 @@
       #include <Wire.h>
       #include "Adafruit_TCS34725.h"
       byte gammatable[256];
-      Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_4X);
+      Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_2_4MS, TCS34725_GAIN_16X);
     // - Dist Sensors Trigger------------------------------------------- 
       #define FrontDistSensorTrigger 12
       #define LeftDistSensorTrigger 11
@@ -39,11 +39,11 @@
     // - Encoders
       int pulses_per_turn = 20;
       //-Right
-      #define RightEncoder 20
+      #define RightEncoder 19
       volatile byte RightPulses;
       void Rcount(){RightPulses++;}
       //-Left
-      #define LeftEncoder 21
+      #define LeftEncoder 20
       volatile byte LeftPulses;
       void Lcount(){LeftPulses++;}
     // - InfraRed
@@ -51,6 +51,9 @@
       int InfraRedSensors[] = {23, 25, 27, 29, 31};
       bool InfraRedValues[NInfraRedSensor];
     // - Servos
+      #include <Servo.h>
+      Servo Rservo;
+      Servo Lservo;
       #define servoRight 10
       #define servoLeft 9
 
@@ -142,8 +145,7 @@ void ejecutaLedRGB(int R, int G, int B){
   delay(1500);
 }
 
-long findDistance(int triggerPin, int echoPin)
-{
+long findDistance(int triggerPin, int echoPin){
   pinMode(triggerPin, OUTPUT);  
   digitalWrite(triggerPin, HIGH);
   delayMicroseconds(5);
@@ -155,14 +157,14 @@ long findDistance(int triggerPin, int echoPin)
 
 void SetColor(){
   float red, green, blue;
-  tcs.setInterrupt(false); 
+  tcs.setInterrupt(false);
   delay(60);  
   tcs.getRGB(&red, &green, &blue);
   tcs.setInterrupt(true);  
-  
   Serial.print("R:\t"); Serial.print(int(red)); 
   Serial.print("\tG:\t"); Serial.print(int(green)); 
   Serial.print("\tB:\t"); Serial.print(int(blue));
+  Serial.print("\n");
   //Funcion para redondear a colores cercanos ()
 
   analogWrite(ledRojo, gammatable[(int)red]);
@@ -223,7 +225,6 @@ bool DetectLine(){
     }
   }
   return false;
-  
 }
 
 void GoFront(){
@@ -274,22 +275,20 @@ void setup() {
       pinMode(ledAzul, OUTPUT);
       
   // - Small Color Sensor
-  Serial.print("Help");
       if (tcs.begin()) {
         Serial.println("Found sensor");
-      } else {
+      } 
+      else {
         Serial.println("No TCS34725 found ... check your connections");
-        while (1); // halt!
+        while (1);
       }
-      
-      Serial.print("Help?");
+  
       for (int i=0; i<256; i++) {
         float x = i;
         x /= 255;
         x = pow(x, 2.5);
         x *= 255;
         gammatable[i] = 255;
-        Serial.println(gammatable[i]);
       }
           
   // - 4 LEDs Color Sensor
@@ -307,7 +306,9 @@ void setup() {
       //Verifiquemos si esto afecta negativamente el rendimiento
       attachInterrupt(digitalPinToInterrupt(RightEncoder), Rcount, FALLING );
       attachInterrupt(digitalPinToInterrupt(LeftEncoder), Lcount, FALLING );
-  // General Setup
+  // - Servo
+      Rservo.attach(servoRight);
+      Lservo.attach(servoLeft);
 }
 
 
@@ -320,6 +321,15 @@ void loop() {
   Serial.print("\n");*/
 
   SetColor();
+
+  /*
+  digitalWrite(servoRight, HIGH);
+  digitalWrite(servoLeft, HIGH);
+  delay(5000);
+    
+  digitalWrite(servoRight, LOW);
+  digitalWrite(servoLeft, LOW);
+  delay(3000);*/
 
 
 }
