@@ -155,21 +155,14 @@ long findDistance(int triggerPin, int echoPin){
   return distance;
 } 
 
-void SetColor(){
+bool IsBall(){
   float red, green, blue;
   tcs.setInterrupt(false);
   delay(60);  
   tcs.getRGB(&red, &green, &blue);
   tcs.setInterrupt(true);  
-  Serial.print("R:\t"); Serial.print(int(red)); 
-  Serial.print("\tG:\t"); Serial.print(int(green)); 
-  Serial.print("\tB:\t"); Serial.print(int(blue));
-  Serial.print("\n");
-  //Funcion para redondear a colores cercanos ()
+  return blue > green && red < blue;
 
-  analogWrite(ledRojo, gammatable[(int)red]);
-  analogWrite(ledVerde, gammatable[(int)green]);
-  analogWrite(ledAzul, gammatable[(int)blue]);
 
 }
 
@@ -214,7 +207,10 @@ void Drive(int left, int right){
 void UpdateInfraRedSensors(){
     for(int i = 0; i < NInfraRedSensor; i++){
       InfraRedValues[i] = digitalRead(InfraRedSensors[i]);
+      Serial.print(InfraRedValues[i]);
+      Serial.print(" ");
     }
+    Serial.print("\n");
 }
 
 bool DetectLine(){
@@ -249,6 +245,19 @@ void GoFront(){
     }
   }
   //Delay(5000)
+}
+
+void ActivateServos(int Limit){
+  Serial.print("Adelante");
+  for(int i = -10; i < Limit; i+=10){
+
+    Rservo.write(-i);
+    Lservo.write(i);
+
+  }
+  delay(300);
+
+
 }
   // - Distance sensors
         long FrontDistance(){
@@ -320,8 +329,20 @@ void loop() {
   Serial.print("\tLeft: "); Serial.print(LeftDistance());
   Serial.print("\n");*/
 
-  SetColor();
+/*Funciona
+Serial.println(IsBall());
 
+if(IsBall()){
+   ActivateServos(200);
+}else{
+  ActivateServos(10);
+}
+
+*/
+ 
+UpdateInfraRedSensors();
+delay(500);
+ 
   /*
   digitalWrite(servoRight, HIGH);
   digitalWrite(servoLeft, HIGH);
