@@ -1,26 +1,26 @@
   //Pre - Setup
     // - LED RGB
-      #define ledRojo 41
-      #define ledVerde 43
-      #define ledAzul 45
+      #define ledRojo 7
+      #define ledVerde 6
+      #define ledAzul 5
     // - 4 LEDs Color Sensor
       #define S0 52
       #define S1 50
       #define S2 48
       #define S3 49
-      #define SensorOut 7
+      #define SensorOut 4
       // Calibration Values
-        int redMin = 0; // Red minimum value
-        int redMax = 0; // Red maximum value
-        int greenMin = 0; // Green minimum value
-        int greenMax = 0; // Green maximum value
-        int blueMin = 0; // Blue minimum value
-        int blueMax = 0; // Blue maximum value
+        int redMin = 105; // Red minimum value
+        int redMax = 11; // Red maximum value
+        int greenMin = 10; // Green minimum value
+        int greenMax = 11; // Green maximum value
+        int blueMin = 87; // Blue minimum value
+        int blueMax = 8; // Blue maximum value
     // - Small Color Sensor
       #include <Wire.h>
       #include "Adafruit_TCS34725.h"
       byte gammatable[256];
-      Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_2_4MS, TCS34725_GAIN_16X);
+      Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_4X);
     // - Dist Sensors Trigger------------------------------------------- 
       #define FrontDistSensorTrigger 12
       #define LeftDistSensorTrigger 11
@@ -54,8 +54,8 @@
       #include <Servo.h>
       Servo Rservo;
       Servo Lservo;
-      #define servoRight 10
-      #define servoLeft 9
+      #define servoRight 9
+      #define servoLeft 10
 
 void calibraSensorRGB(){
   // Variables para la Medida del Ancho de Pulso de Color
@@ -77,7 +77,7 @@ void calibraSensorRGB(){
   Serial.print(" - Green PW = ");
   Serial.print(greenPW);
   Serial.print(" - Blue PW = ");
-  Serial.print(bluePW);
+  Serial.println(bluePW);
 }
 
 void leeSensorRGB(){
@@ -105,6 +105,13 @@ void leeSensorRGB(){
   blueValue = map(bluePW, blueMin, blueMax, 255, 0);
   delay(200);
   //
+  // Imprimir los valores finales en el Serial Monitor
+  Serial.print("Red Value = ");
+  Serial.print(redValue);
+  Serial.print(" - Green Value = ");
+  Serial.print(greenValue);
+  Serial.print(" - Blue Value = ");
+  Serial.println(blueValue);
   ejecutaLedRGB(redValue, greenValue, blueValue);
 }
 
@@ -139,10 +146,10 @@ int getBluePW(){
 }
 
 void ejecutaLedRGB(int R, int G, int B){
-  digitalWrite(ledRojo, R); // Pasar el valor obtenido de ROJO al led RGB
-  digitalWrite(ledVerde, G); // Pasar el valor obtenido de VERDE al led RGB
-  digitalWrite(ledAzul, B);  // Pasar el valor obtenido de AZUL al led RGB
-  delay(1500);
+  analogWrite(ledRojo, R); // Pasar el valor obtenido de ROJO al led RGB
+  analogWrite(ledVerde, G); // Pasar el valor obtenido de VERDE al led RGB
+  analogWrite(ledAzul, B);  // Pasar el valor obtenido de AZUL al led RGB
+  delay(300);
 }
 
 long findDistance(int triggerPin, int echoPin){
@@ -161,7 +168,12 @@ bool IsBall(){
   delay(60);  
   tcs.getRGB(&red, &green, &blue);
   tcs.setInterrupt(true);  
+ /* analogWrite(ledRojo, red);
+  analogWrite(ledVerde, green);
+  analogWrite(ledAzul, blue);*/
+  Serial.print(red); Serial.print(" "); Serial.print(green); Serial.print(" "); Serial.println(blue);
   return blue > green && red < blue;
+
 
 
 }
@@ -251,8 +263,7 @@ void ActivateServos(int Limit){
   Serial.print("Adelante");
   for(int i = -10; i < Limit; i+=10){
 
-    Rservo.write(-i);
-    Lservo.write(i);
+    Lservo.write(-i);
 
   }
   delay(300);
@@ -316,8 +327,8 @@ void setup() {
       attachInterrupt(digitalPinToInterrupt(RightEncoder), Rcount, FALLING );
       attachInterrupt(digitalPinToInterrupt(LeftEncoder), Lcount, FALLING );
   // - Servo
-      Rservo.attach(servoRight);
-      Lservo.attach(servoLeft);
+      //Rservo.attach(servoRight);
+      //Lservo.attach(servoLeft);
 }
 
 
@@ -340,8 +351,8 @@ if(IsBall()){
 
 */
  
-UpdateInfraRedSensors();
-delay(500);
+/*UpdateInfraRedSensors();
+delay(500); */
  
   /*
   digitalWrite(servoRight, HIGH);
@@ -351,6 +362,6 @@ delay(500);
   digitalWrite(servoRight, LOW);
   digitalWrite(servoLeft, LOW);
   delay(3000);*/
-
-
+  // calibraSensorRGB();
+  // leeSensorRGB();
 }
