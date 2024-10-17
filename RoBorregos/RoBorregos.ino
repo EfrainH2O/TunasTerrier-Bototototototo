@@ -4,10 +4,10 @@
       #define ledVerde 6
       #define ledAzul 5
     // - 4 LEDs Color Sensor
-      #define S0 52
-      #define S1 50
-      #define S2 48
-      #define S3 49
+      #define S0 53
+      #define S1 52
+      #define S2 51
+      #define S3 50
       #define SensorOut 4
       // Calibration Values
         int redMin = 105; // Red minimum value
@@ -26,13 +26,13 @@
       #define LeftDistSensorTrigger 11
       #define RightDistSensorTrigger 13
     // - Dist Sensors Echo-------------------------------------------
-      #define FrontDistSensorEcho 24
-      #define LeftDistSensorEcho 26
-      #define RightDistSensorEcho 22
+      #define FrontDistSensorEcho 23
+      #define LeftDistSensorEcho 25
+      #define RightDistSensorEcho 27
     // - Motors
       #define RightA 34
       #define RightB 32
-      #define RightPow 2
+      #define RightPow 2 
       #define LeftA 35
       #define LeftB 33
       #define LeftPow 3
@@ -48,7 +48,7 @@
       void Lcount(){LeftPulses++;}
     // - InfraRed 
       const int NInfraRedSensor = 5;
-      int InfraRedSensors[] = {23, 25, 27, 29, 31};
+      int InfraRedSensors[] = {22, 24, 26, 28, 30};
       bool InfraRedValues[NInfraRedSensor];
     // - Servos
       #include <Servo.h>
@@ -237,17 +237,17 @@
   void GoFront(double dist){
     LeftPulses = 0;
     RightPulses = 0;
-    int blockDist = dist/3.14/6*pulses_per_turn;   //Ponemos operaciones para ponerlo en terminos de bloques
+    int blockDist = dist/3.14/6.75*pulses_per_turn;   //Ponemos operaciones para ponerlo en terminos de bloques
     int RightError = 0 ;
     int LeftError = 0;
     int kp = 0.5;
     while(LeftPulses < blockDist || RightPulses < blockDist){
       int RightError = (blockDist - RightPulses) ;
-      int LeftError = (blockDist - LeftPulses);
+      int LeftError = (blockDist - LeftPulses); // map(LeftError, 0, blockDist, 0, 1);
       LeftError = LeftError < 0 ? 0 : LeftError;
       RightError = RightError < 0 ? 0 : RightError;
       //El error puede ser cambiado entre calcular la distancia hacia la pared o nomas con los encoders
-      Drive(RightError * kp, LeftError * kp);
+      Drive(LeftError * kp, RightError * kp);
 
     }
     delay(5000);
