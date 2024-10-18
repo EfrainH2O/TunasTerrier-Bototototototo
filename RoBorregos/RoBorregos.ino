@@ -17,7 +17,7 @@
         int blueMin = 22; // Blue minimum value
         int blueMax = 213; // Blue maximum value
       // Threshold Variable
-        int thresholdValue = 25 // Error acceptance
+        int thresholdValue = 25; // Error acceptance
     // - Small Color Sensor
       #include <Wire.h>
       #include "Adafruit_TCS34725.h"
