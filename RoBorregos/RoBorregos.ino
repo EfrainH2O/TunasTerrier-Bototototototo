@@ -1,8 +1,8 @@
 //Pre - Setup
     // - LED RGB
       #define ledRojo 7
-      #define ledVerde 6
-      #define ledAzul 5
+      #define ledVerde 5
+      #define ledAzul 6
     // - 4 LEDs Color Sensor
       #define S0 53
       #define S1 52
@@ -10,12 +10,14 @@
       #define S3 50
       #define SensorOut 4
       // Calibration Values
-        int redMin = 105; // Red minimum value
-        int redMax = 11; // Red maximum value
-        int greenMin = 10; // Green minimum value
-        int greenMax = 11; // Green maximum value
-        int blueMin = 87; // Blue minimum value
-        int blueMax = 8; // Blue maximum value
+        int redMin = 26; // Red minimum value
+        int redMax = 206; // Red maximum value
+        int greenMin = 28; // Green minimum value
+        int greenMax = 276; // Green maximum value
+        int blueMin = 22; // Blue minimum value
+        int blueMax = 213; // Blue maximum value
+      // Threshold Variable
+        int thresholdValue = 25 // Error acceptance
     // - Small Color Sensor
       #include <Wire.h>
       #include "Adafruit_TCS34725.h"
@@ -88,25 +90,43 @@
     int greenPW = 0;
     int bluePW = 0;
     // Variables para el Valor Final del Color
-    int redValue;
-    int greenValue;
-    int blueValue;
+    int redValue = 0;
+    int greenValue = 0;
+    int blueValue = 0;
+    // Variables para sumar los primeros 5 valores del color
+    int redValueSum = 0;
+    int greenValueSum = 0;
+    int blueValueSum = 0;
     // Lee el ancho de pulso de ROJO
-    redPW = getRedPW();
-    // Mapea el valor desde 0-255
-    redValue = map(redPW, redMin, redMax, 255, 0);
-    delay(200);
+    for (int i = 0; i < 5; i++) { 
+      redPW = getRedPW();
+      // Mapea el valor desde 0-255
+      redValue = map(redPW, redMin, redMax, 255, 0);
+      redValueSum += redValue;
+      delay(200);
+    }
+    // Promedia la suma de los 5 valores del color ROJO
+    redValue = redValueSum / 5;
     // Lee el ancho de pulso de VERDE
-    greenPW = getGreenPW();
-    // Mapea el valor desde 0-255
-    greenValue = map(greenPW, greenMin, greenMax, 255, 0);
-    delay(200);
+    for (int j = 0; j < 5; j++) {
+      greenPW = getGreenPW();
+      // Mapea el valor desde 0-255
+      greenValue = map(greenPW, greenMin, greenMax, 255, 0);
+      greenValueSum += greenValue;
+      delay(200);
+    }
+    // Promedia la suma de los 5 valores del color VERDE
+    greenValue = greenValueSum / 5;
     // Lee el ancho de pulso de AZUL
-    bluePW = getBluePW();
-    // Mapea el valor desde 0-255
-    blueValue = map(bluePW, blueMin, blueMax, 255, 0);
-    delay(200);
-    //
+    for(int h = 0; h < 5; h++) {
+      bluePW = getBluePW();
+      // Mapea el valor desde 0-255
+      blueValue = map(bluePW, blueMin, blueMax, 255, 0);
+      blueValueSum += blueValue;
+      delay(200);
+      }
+    // Promedia la suma de los 5 valores del color AZUL
+    blueValue = blueValueSum / 5;
     // Imprimir los valores finales en el Serial Monitor
     Serial.print("Red Value = ");
     Serial.print(redValue);
@@ -114,7 +134,39 @@
     Serial.print(greenValue);
     Serial.print(" - Blue Value = ");
     Serial.println(blueValue);
-    ejecutaLedRGB(redValue, greenValue, blueValue);
+        // Mapeo de colores
+    if (redValue > 200 &&  blueValue > 200 && greenValue + thresholdValue < 200){
+      Serial.println("Color detectado: Morado");
+      ejecutaLedRGB(128, 0, 128);
+    }
+    else if (redValue > 250 && greenValue + thresholdValue < 200 && blueValue + thresholdValue < 200){
+      Serial.println("Color detectado: Rosa");
+      ejecutaLedRGB(255, 105, 180);
+    }
+    else if (redValue > 200 && greenValue > 200 && blueValue + thresholdValue < 200){
+      Serial.println("Color detectado: Amarillo");
+      ejecutaLedRGB(255, 255, 0);
+    }
+    else if (redValue > 250 && greenValue + thresholdValue < 200 && blueValue + thresholdValue < 150){
+      Serial.println("Color detectado: Naranja");
+      ejecutaLedRGB(255, 165, 0);
+    }
+    else if (redValue > 250 && greenValue + thresholdValue < 150 && blueValue + thresholdValue < 150){
+      Serial.println("Color detectado: Rojo");
+      ejecutaLedRGB(255, 0, 0);
+    }
+    else if(redValue + thresholdValue < 150 && greenValue > 250 && blueValue + thresholdValue < 150){
+      Serial.print("Color detectado: Verde");
+      ejecutaLedRGB(0, 255, 0);
+    }
+    else if (redValue < thresholdValue && greenValue < thresholdValue && blueValue < thresholdValue){
+      Serial.println("Color detectado: Negro");
+      ejecutaLedRGB(0, 0, 255);
+    }
+    else {
+      Serial.println("Color indeterminado");
+      ejecutaLedRGB(255, 255, 255);
+    }
   }
 
   int getRedPW(){
@@ -151,7 +203,6 @@
     analogWrite(ledRojo, R); // Pasar el valor obtenido de ROJO al led RGB
     analogWrite(ledVerde, G); // Pasar el valor obtenido de VERDE al led RGB
     analogWrite(ledAzul, B);  // Pasar el valor obtenido de AZUL al led RGB
-    delay(300);
   }
 
   long findDistance(int triggerPin, int echoPin){
@@ -353,9 +404,9 @@ if(IsBall()){
 }
 
 */
-GoFront(15);
+//GoFront(15);
 //Drive(0.5,0.5);
-delay(5000);
+//delay(5000);
 /*digitalWrite(RightA, HIGH);
 digitalWrite(RightB, LOW);
 analogWrite(RightPow, 255);*/
@@ -371,6 +422,6 @@ delay(500); */
   digitalWrite(servoRight, LOW);
   digitalWrite(servoLeft, LOW);
   delay(3000);*/
-  // calibraSensorRGB();
-  // leeSensorRGB();
+  calibraSensorRGB();
+  //leeSensorRGB();
 }
