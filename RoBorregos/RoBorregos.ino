@@ -30,20 +30,20 @@
       #define LeftDistSensorEcho 25
       #define RightDistSensorEcho 27
     // - Motors
-      #define RightA 34
-      #define RightB 32
+      #define RightA 32
+      #define RightB 34
       #define RightPow 2 
       #define LeftA 35
       #define LeftB 33
       #define LeftPow 3
     // - Encoders
-      int pulses_per_turn = 20;
+      int pulses_per_turn = 40;
       //-Right
       #define RightEncoder 19
       volatile byte RightPulses;
       void Rcount(){RightPulses++;}
       //-Left
-      #define LeftEncoder 20
+      #define LeftEncoder 18
       volatile byte LeftPulses;
       void Lcount(){LeftPulses++;}
     // - InfraRed 
@@ -176,8 +176,11 @@
     Serial.print(red); Serial.print(" "); Serial.print(green); Serial.print(" "); Serial.println(blue);
     return blue > green && red < blue;
   }
-
-  void Drive(int left, int right){
+float mapfloat(float x, float in_min, float in_max, float out_min, float out_max)
+{
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+  void Drive(float left, float right){
     //Set Motor Direction
     if(left > 0){
       digitalWrite(LeftA, HIGH);
@@ -206,11 +209,14 @@
     //Set Motor Velocity
     left = abs(left);
     right = abs(right);
+    
     left = left > 1 ? 1: left;
     right = right > 1 ? 1: right;
 
-    int LeftWheel = map(left, 0, 1, 0, 255);
-    int RightWheel = map(right, 0, 1, 0, 255);
+    float LeftWheel = mapfloat(left, 0, 1, 0, 255);
+    float RightWheel = mapfloat(right, 0, 1, 0, 255);
+    
+    //Serial.print("LWhel: ");Serial.print(left); Serial.print("\tRWehl: "); Serial.println(right);
     analogWrite(LeftPow, LeftWheel);
     analogWrite(RightPow, RightWheel);
   }
@@ -238,19 +244,26 @@
     LeftPulses = 0;
     RightPulses = 0;
     int blockDist = dist/3.14/6.75*pulses_per_turn;   //Ponemos operaciones para ponerlo en terminos de bloques
-    int RightError = 0 ;
-    int LeftError = 0;
-    int kp = 0.5;
+    double RightError = 0;
+    double LeftError = 0;
     while(LeftPulses < blockDist || RightPulses < blockDist){
-      int RightError = (blockDist - RightPulses) ;
-      int LeftError = (blockDist - LeftPulses); // map(LeftError, 0, blockDist, 0, 1);
-      LeftError = LeftError < 0 ? 0 : LeftError;
-      RightError = RightError < 0 ? 0 : RightError;
+      RightError = (blockDist - RightPulses) ;
+      LeftError = (blockDist - LeftPulses); // map(LeftError, 0, blockDist, 0, 1);
+      Serial.print("Lpulses: "); Serial.print(LeftPulses);Serial.print("\tRPulses:"); Serial.print(RightPulses);
+      LeftError = LeftError/(float)(blockDist);
+      RightError = RightError/(float)(blockDist);
       //El error puede ser cambiado entre calcular la distancia hacia la pared o nomas con los encoders
-      Drive(LeftError * kp, RightError * kp);
+      RightError = RightError <0.7 && RightError > 0 ? 0.7 : RightError;
+      RightError = RightError < 0 ? 0 : RightError;
+      LeftError = LeftError <0.7 && LeftError > 0 ? 0.7 : LeftError;
+      LeftError = LeftError < 0 ? 0 : LeftError;
+      Drive(LeftError, RightError);
+
+      Serial.print("\t\t\tLError: "); Serial.print(LeftError);Serial.print("\tRIghtError:"); Serial.println(RightError);
 
     }
-    delay(5000);
+    
+    Drive(0,0);
   }
 
   void ActivateServos(int Limit){
@@ -340,6 +353,12 @@ if(IsBall()){
 }
 
 */
+GoFront(15);
+//Drive(0.5,0.5);
+delay(5000);
+/*digitalWrite(RightA, HIGH);
+digitalWrite(RightB, LOW);
+analogWrite(RightPow, 255);*/
  
 /*UpdateInfraRedSensors();
 delay(500); */
