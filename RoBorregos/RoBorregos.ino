@@ -142,7 +142,7 @@
     Serial.print(greenValue);
     Serial.print(" - Blue Value = ");
     Serial.println(blueValue);
-        // Mapeo de colores
+    // Mapeo de colores
     if (redValue > 200 &&  blueValue > 200 && greenValue + thresholdValue < 200){
       Serial.println("Color detectado: Morado");
       ejecutaLedRGB(128, 0, 128);
@@ -340,6 +340,53 @@ float mapfloat(float x, float in_min, float in_max, float out_min, float out_max
     Drive(0.7+total,0.7-total);
   }
 
+// Secuencia para verificar si el robot no tiene pared cerca del lado del sensor main
+  bool canMove(int trigger, int echo){ return findDistance(trigger, echo) > 5; }
+
+// Secuencia para resolver Pista A con "front" como sensor main
+  void movFrontSensor() {
+    if (canMove(FrontDistSensorTrigger, FrontDistSensorEcho)) { goFront(); }
+    else {
+      goLeft();
+      goFront();
+      mainSensor = 1;
+    }
+  }
+
+// Secuencia para resolver Pista A con "right" como sensor main
+  void movRightSensor() {
+    if (canMove(RightDistSensorTrigger, RightDistSensorEcho)) {
+      if (findDistance(FrontDistSensorTrigger, FrontDistSensorEcho) > 30) { catchBall(); }
+      else { goFront(); }
+    }
+    else { 
+      goRight();
+      goFront();
+    }
+  }
+
+// Secuencia para resolver Pista A con "left" como main
+  void movLeftSensor(){
+    if (canMove(LeftDistSensorTrigger, RightDistSensorEcho)) {
+      if (findDistance(FrontDistSensorTrigger, FrontDistSensorEcho) > 30) { catchBall(); }
+      else { goFront(); }
+    }
+    else {
+      goLeft();
+      goFront();
+    }
+  }
+
+// Algoritmo para Resolver Pista A
+  void resuelveLaberinto(int mainSensor){
+    while(Ball == false){
+      verfNegro();
+      if(mainSensor == 0){ movFrontSensor(); }
+      else if (mainSensor == 1){ moveRightSensor(); }
+      else { moveLeftSensor(); }
+    }
+  }
+
   void ActivateServos(int Limit){
     Serial.print("Adelante");
     for(int i = -10; i < Limit; i+=10){
@@ -407,8 +454,6 @@ void setup() {
       //Rservo.attach(servoRight);
       Lservo.attach(servoLeft);
 }
-
-
 
 void loop() {
   /* Funciona 
