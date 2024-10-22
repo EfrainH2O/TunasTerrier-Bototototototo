@@ -289,7 +289,7 @@ float mapfloat(float x, float in_min, float in_max, float out_min, float out_max
   bool DetectLine(){
     //Se puede hacer con la lista de valores, pero siento que seria un tanto peligroso
     for(int i = 0; i < NInfraRedSensor; i++){
-      if(digitalRead(InfraRedSensors[i]) != LOW){
+      if((InfraRedSensors[i]) != LOW){
         return true;
       }
     }
@@ -340,12 +340,9 @@ float mapfloat(float x, float in_min, float in_max, float out_min, float out_max
     Drive(0.7+total,0.7-total);
   }
 
-// Secuencia para verificar si el robot no tiene pared cerca del lado del sensor main
-  bool canMove(int trigger, int echo){ return findDistance(trigger, echo) > 5; }
-
 // Secuencia para resolver Pista A con "front" como sensor main
   void movFrontSensor() {
-    if (canMove(FrontDistSensorTrigger, FrontDistSensorEcho)) { goFront(); }
+    if (FrontDistance() > 5) { goFront(); }
     else {
       goLeft();
       goFront();
@@ -355,8 +352,8 @@ float mapfloat(float x, float in_min, float in_max, float out_min, float out_max
 
 // Secuencia para resolver Pista A con "right" como sensor main
   void movRightSensor() {
-    if (canMove(RightDistSensorTrigger, RightDistSensorEcho)) {
-      if (findDistance(FrontDistSensorTrigger, FrontDistSensorEcho) > 30) { catchBall(); }
+    if (RightDistance() > 5) {
+      if (FrontDistance() > 30) { catchBall(); }
       else { goFront(); }
     }
     else { 
@@ -367,8 +364,8 @@ float mapfloat(float x, float in_min, float in_max, float out_min, float out_max
 
 // Secuencia para resolver Pista A con "left" como main
   void movLeftSensor(){
-    if (canMove(LeftDistSensorTrigger, RightDistSensorEcho)) {
-      if (findDistance(FrontDistSensorTrigger, FrontDistSensorEcho) > 30) { catchBall(); }
+    if (LeftDistance() > 5) {
+      if (FrontDistance() > 30) { catchBall(); }
       else { goFront(); }
     }
     else {
@@ -376,10 +373,23 @@ float mapfloat(float x, float in_min, float in_max, float out_min, float out_max
       goFront();
     }
   }
+  
+// Secuencia para verificar y evitar la linea negra de la Pista A
+  void verfNegro(){
+    if (DetectLine()){
+      goInverted();
+      if (main == 1){
+        main = 2;
+      }
+      else {
+        main = 1;
+      }
+    }
+  }
 
 // Algoritmo para Resolver Pista A
   void resuelveLaberinto(int mainSensor){
-    while(Ball == false){
+    while(Ball == false){ // Fase 1: Busqueda de pelota
       verfNegro();
       if(mainSensor == 0){ movFrontSensor(); }
       else if (mainSensor == 1){ moveRightSensor(); }
