@@ -58,6 +58,14 @@
       Servo Lservo;
       #define servoRight 9
       #define servoLeft 10
+    // - PID
+      int kp = 1;
+      int ki = 0;
+      int kd = 0;
+      float p;
+      float i;
+      float d;
+      float prevError;
 
 // - Subsistemas
   
@@ -274,11 +282,8 @@ float mapfloat(float x, float in_min, float in_max, float out_min, float out_max
 
   void UpdateInfraRedSensors(){
       for(int i = 0; i < NInfraRedSensor; i++){
-        InfraRedValues[i] = digitalRead(InfraRedSensors[i]);
-        Serial.print(InfraRedValues[i]);
-        Serial.print(" ");
+        InfraRedValues[i] = digitalRead(InfraRedSensors[i]); 
       }
-      Serial.print("\n");
   }
 
   bool DetectLine(){
@@ -304,17 +309,35 @@ float mapfloat(float x, float in_min, float in_max, float out_min, float out_max
       LeftError = LeftError/(float)(blockDist);
       RightError = RightError/(float)(blockDist);
       //El error puede ser cambiado entre calcular la distancia hacia la pared o nomas con los encoders
-      RightError = RightError <0.7 && RightError > 0 ? 0.7 : RightError;
+      RightError = RightError <0.3 && RightError > 0 ? 0.3 : RightError;
+      LeftError = LeftError <0.3 && LeftError > 0 ? 0.3 : LeftError;
       RightError = RightError < 0 ? 0 : RightError;
-      LeftError = LeftError <0.7 && LeftError > 0 ? 0.7 : LeftError;
       LeftError = LeftError < 0 ? 0 : LeftError;
       Drive(LeftError, RightError);
-
       Serial.print("\t\t\tLError: "); Serial.print(LeftError);Serial.print("\tRIghtError:"); Serial.println(RightError);
-
     }
-    
+    while(LeftPulses < RightPulses){
+      Drive(0.3,0);
+      Serial.print("Lpulses: "); Serial.print(LeftPulses);Serial.print("\tRPulses:"); Serial.println(RightPulses);
+    }
+    while(RightPulses < LeftPulses){
+      Serial.print("Lpulses: "); Serial.print(LeftPulses);Serial.print("\tRPulses:"); Serial.println(RightPulses);
+      Drive(0,0.3);
+    }
     Drive(0,0);
+  }
+
+  void PIDLinea(){
+    
+    UpdateInfraRedSensors();
+    int error = -2*InfraRedValues[0] - InfraRedValues[1] + InfraRedValues[3] + 2*InfraRedValues[4];
+    p = error ;
+    i += error;
+    i = error * i < 0 ? 0 : i;
+    d = error - prevError;
+    prevError = error;
+    float total = p + i + d;
+    Drive(0.7+total,0.7-total);
   }
 
   void ActivateServos(int Limit){
@@ -404,8 +427,13 @@ if(IsBall()){
 }
 
 */
-//GoFront(15);
-//Drive(0.5,0.5);
+i = 0;
+prevError = 0;
+while(DetectLine()){
+  PIDLinea();
+}
+Drive(-5,-5);
+//Drive(0.3,0);
 //delay(5000);
 /*digitalWrite(RightA, HIGH);
 digitalWrite(RightB, LOW);
@@ -422,6 +450,6 @@ delay(500); */
   digitalWrite(servoRight, LOW);
   digitalWrite(servoLeft, LOW);
   delay(3000);*/
-  calibraSensorRGB();
+ // calibraSensorRGB();
   //leeSensorRGB();
 }
