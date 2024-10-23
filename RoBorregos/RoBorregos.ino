@@ -253,8 +253,9 @@
     Serial.print("Adelante");
     for(int i = -10; i < Limit; i+=10){
       Lservo.write(-i);
+
     }
-  delay(300);
+    delay(300);
   }
 
   // - Distance sensors
@@ -302,18 +303,19 @@
   void PIDLinea(){
     
     UpdateInfraRedSensors();
-    int error = -2*InfraRedValues[0] - InfraRedValues[1] + InfraRedValues[3] + 2*InfraRedValues[4];
+    float error = -2*InfraRedValues[0] - 1*InfraRedValues[1] + 1*InfraRedValues[3] + 2*InfraRedValues[4];
+    error = error == 0 ? prevError : error;
     p = error ;
     i += error;
     i = error * i < 0 ? 0 : i;
     d = error - prevError;
     prevError = error;
-    float total = p + i + d;
-    Drive(0.7+total,0.7-total);
+    float total = kp*p + ki*i +kd*d;
+    Drive(0.8+total,0.8-total);
   }
 // Algoritmo de resolucion de Pista A
   // Secuencia para resolver Pista A con "front" como sensor main
-    void movFrontSensor() {
+/*    void movFrontSensor() {
       if (FrontDistance() > 5) { goFront(); }
       else {
         goLeft();
@@ -371,7 +373,7 @@
         verfNegro();
       }
     }
-
+*/
 void setup() {
   
       Serial.begin(9600);
@@ -393,15 +395,7 @@ void setup() {
         Serial.println("No TCS34725 found ... check your connections");
         while (1);
       }
-  
-      for (int i=0; i<256; i++) {
-        float x = i;
-        x /= 255;
-        x = pow(x, 2.5);
-        x *= 255;
-        gammatable[i] = 255;
-      }
-          
+
   // - 4 LEDs Color Sensor
       pinMode(S0, OUTPUT);
       pinMode(S1, OUTPUT);
@@ -428,5 +422,6 @@ void loop() {
   while(DetectLine()){
     PIDLinea();
   }
-  Drive(-5,-5);
+  delay(200);
+
 }
