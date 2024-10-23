@@ -1,74 +1,28 @@
 //Pre - Setup
-    // - LED RGB
-      #define ledRojo 7
-      #define ledVerde 5
-      #define ledAzul 6
-    // - 4 LEDs Color Sensor
-      #define S0 53
-      #define S1 52
-      #define S2 51
-      #define S3 50
-      #define SensorOut 4
-      // Calibration Values
-        int redMin = 26; // Red minimum value
-        int redMax = 206; // Red maximum value
-        int greenMin = 28; // Green minimum value
-        int greenMax = 276; // Green maximum value
-        int blueMin = 22; // Blue minimum value
-        int blueMax = 213; // Blue maximum value
-      // Threshold Variable
-        int thresholdValue = 25; // Error acceptance
-    // - Small Color Sensor
-      #include <Wire.h>
-      #include "Adafruit_TCS34725.h"
-      byte gammatable[256];
-      Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_4X);
-    // - Dist Sensors Trigger------------------------------------------- 
-      #define FrontDistSensorTrigger 12
-      #define LeftDistSensorTrigger 11
-      #define RightDistSensorTrigger 13
-    // - Dist Sensors Echo-------------------------------------------
-      #define FrontDistSensorEcho 23
-      #define LeftDistSensorEcho 25
-      #define RightDistSensorEcho 27
-    // - Motors
-      #define RightA 32
-      #define RightB 34
-      #define RightPow 2 
-      #define LeftA 35
-      #define LeftB 33
-      #define LeftPow 3
-    // - Encoders
-      int pulses_per_turn = 40;
-      //-Right
-      #define RightEncoder 19
-      volatile byte RightPulses;
-      void Rcount(){RightPulses++;}
-      //-Left
-      #define LeftEncoder 18
-      volatile byte LeftPulses;
-      void Lcount(){LeftPulses++;}
-    // - InfraRed 
-      const int NInfraRedSensor = 5;
-      int InfraRedSensors[] = {22, 24, 26, 28, 30};
-      bool InfraRedValues[NInfraRedSensor];
-    // - Servos
-      #include <Servo.h>
-      Servo Rservo;
-      Servo Lservo;
-      #define servoRight 9
-      #define servoLeft 10
-    // - PID
-      int kp = 1;
-      int ki = 0;
-      int kd = 0;
-      float p;
-      float i;
-      float d;
-      float prevError;
+  // - Small Color Sensor
+    #include <Wire.h>
+    #include "Adafruit_TCS34725.h"
+    Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_4X);
+  // - Encoders
+    //-Right
+    volatile byte RightPulses;
+    void Rcount(){RightPulses++;}
+    //-Left
+    volatile byte LeftPulses;
+    void Lcount(){LeftPulses++;}
+  // - InfraRed 
+    bool InfraRedValues[NInfraRedSensor];
+  // - Servos
+    #include <Servo.h>
+    Servo Rservo;
+    Servo Lservo;
+  // - PID
+    float p;
+    float i;
+    float d;
+    float prevError;
 
 // - Subsistemas
-  
   void calibraSensorRGB(){
     // Variables para la Medida del Ancho de Pulso de Color
     int redPW = 0;
@@ -229,16 +183,14 @@
     delay(60);  
     tcs.getRGB(&red, &green, &blue);
     tcs.setInterrupt(true);  
-  /* analogWrite(ledRojo, red);
-    analogWrite(ledVerde, green);
-    analogWrite(ledAzul, blue);*/
     Serial.print(red); Serial.print(" "); Serial.print(green); Serial.print(" "); Serial.println(blue);
     return blue > green && red < blue;
   }
-float mapfloat(float x, float in_min, float in_max, float out_min, float out_max)
-{
-  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-}
+
+  float mapfloat(float x, float in_min, float in_max, float out_min, float out_max){
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+  }
+
   void Drive(float left, float right){
     //Set Motor Direction
     if(left > 0){
@@ -339,63 +291,63 @@ float mapfloat(float x, float in_min, float in_max, float out_min, float out_max
     float total = p + i + d;
     Drive(0.7+total,0.7-total);
   }
+// Algoritmo de resolucion de Pista A
+  // Secuencia para resolver Pista A con "front" como sensor main
+    void movFrontSensor() {
+      if (FrontDistance() > 5) { goFront(); }
+      else {
+        goLeft();
+        goFront();
+        mainSensor = 1;
+      }
+    }
 
-// Secuencia para resolver Pista A con "front" como sensor main
-  void movFrontSensor() {
-    if (FrontDistance() > 5) { goFront(); }
-    else {
-      goLeft();
-      goFront();
-      mainSensor = 1;
+  // Secuencia para resolver Pista A con "right" como sensor main
+    void movRightSensor() {
+      if (RightDistance() > 5) {
+        if (FrontDistance() > 30) { catchBall(); }
+        else { goFront(); }
+      }
+      else { 
+        goRight();
+        goFront();
+      }
     }
-  }
 
-// Secuencia para resolver Pista A con "right" como sensor main
-  void movRightSensor() {
-    if (RightDistance() > 5) {
-      if (FrontDistance() > 30) { catchBall(); }
-      else { goFront(); }
-    }
-    else { 
-      goRight();
-      goFront();
-    }
-  }
-
-// Secuencia para resolver Pista A con "left" como main
-  void movLeftSensor(){
-    if (LeftDistance() > 5) {
-      if (FrontDistance() > 30) { catchBall(); }
-      else { goFront(); }
-    }
-    else {
-      goLeft();
-      goFront();
-    }
-  }
-  
-// Secuencia para verificar y evitar la linea negra de la Pista A
-  void verfNegro(){
-    if (DetectLine()){
-      goInverted();
-      if (main == 1){
-        main = 2;
+  // Secuencia para resolver Pista A con "left" como main
+    void movLeftSensor(){
+      if (LeftDistance() > 5) {
+        if (FrontDistance() > 30) { catchBall(); }
+        else { goFront(); }
       }
       else {
-        main = 1;
+        goLeft();
+        goFront();
       }
     }
-  }
 
-// Algoritmo para Resolver Pista A
-  void resuelveLaberinto(int mainSensor){
-    while(Ball == false){ // Fase 1: Busqueda de pelota
-      verfNegro();
-      if(mainSensor == 0){ movFrontSensor(); }
-      else if (mainSensor == 1){ moveRightSensor(); }
-      else { moveLeftSensor(); }
+  // Secuencia para verificar y evitar la linea negra de la Pista A
+    void verfNegro(){
+      if (DetectLine()){
+        goInverted();
+        if (main == 1){
+          main = 2;
+        }
+        else {
+          main = 1;
+        }
+      }
     }
-  }
+
+  // Resolucion de Pista A
+    void resuelveLaberinto(int mainSensor){
+      while(Ball == false){ // Fase 1: Busqueda de pelota
+        verfNegro();
+        if(mainSensor == 0){ movFrontSensor(); }
+        else if (mainSensor == 1){ moveRightSensor(); }
+        else { moveLeftSensor(); }
+      }
+    }
 
   void ActivateServos(int Limit){
     Serial.print("Adelante");
@@ -466,45 +418,10 @@ void setup() {
 }
 
 void loop() {
-  /* Funciona 
-  Serial.print("Frente: "); Serial.print((int)FrontDistance());
-  Serial.print("\tDerecha: "); Serial.print(RightDistance());
-  Serial.print("\tLeft: "); Serial.print(LeftDistance());
-  Serial.print("\n");*/
-
-/*Funciona
-Serial.println(IsBall());
-
-if(IsBall()){
-   ActivateServos(200);
-}else{
-  ActivateServos(10);
-}
-
-*/
-i = 0;
-prevError = 0;
-while(DetectLine()){
-  PIDLinea();
-}
-Drive(-5,-5);
-//Drive(0.3,0);
-//delay(5000);
-/*digitalWrite(RightA, HIGH);
-digitalWrite(RightB, LOW);
-analogWrite(RightPow, 255);*/
- 
-/*UpdateInfraRedSensors();
-delay(500); */
- 
-  /*
-  digitalWrite(servoRight, HIGH);
-  digitalWrite(servoLeft, HIGH);
-  delay(5000);
-    
-  digitalWrite(servoRight, LOW);
-  digitalWrite(servoLeft, LOW);
-  delay(3000);*/
- // calibraSensorRGB();
-  //leeSensorRGB();
+  i = 0;
+  prevError = 0;
+  while(DetectLine()){
+    PIDLinea();
+  }
+  Drive(-5,-5);
 }
