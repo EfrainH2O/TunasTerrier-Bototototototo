@@ -1,4 +1,5 @@
 //Pre - Setup
+  #include "Pines.h"
   // - Small Color Sensor
     #include <Wire.h>
     #include "Adafruit_TCS34725.h"
@@ -248,6 +249,25 @@
     return false;
   }
 
+  void ActivateServos(int Limit){
+    Serial.print("Adelante");
+    for(int i = -10; i < Limit; i+=10){
+      Lservo.write(-i);
+    }
+  delay(300);
+  }
+
+  // - Distance sensors
+    long FrontDistance(){
+      return findDistance(FrontDistSensorTrigger, FrontDistSensorEcho);
+    }
+    long LeftDistance(){
+      return findDistance(LeftDistSensorTrigger, LeftDistSensorEcho);
+    }
+    long RightDistance(){
+      return findDistance(RightDistSensorTrigger, RightDistSensorEcho);
+    }
+
   void GoFront(double dist){
     LeftPulses = 0;
     RightPulses = 0;
@@ -347,25 +367,10 @@
         else if (mainSensor == 1){ moveRightSensor(); }
         else { moveLeftSensor(); }
       }
+      while(Color != "green"){
+        verfNegro();
+      }
     }
-
-  void ActivateServos(int Limit){
-    Serial.print("Adelante");
-    for(int i = -10; i < Limit; i+=10){
-      Lservo.write(-i);
-    }
-    delay(300);
-  }
-    // - Distance sensors
-          long FrontDistance(){
-            return findDistance(FrontDistSensorTrigger, FrontDistSensorEcho);
-          }
-          long LeftDistance(){
-            return findDistance(LeftDistSensorTrigger, LeftDistSensorEcho);
-          }
-          long RightDistance(){
-            return findDistance(RightDistSensorTrigger, RightDistSensorEcho);
-          }
 
 void setup() {
   
