@@ -98,37 +98,71 @@
     Serial.print(" - Blue Value = ");
     Serial.println(blueValue);
     // Mapeo de colores
-    if (redValue > 200 &&  blueValue > 200 && greenValue + thresholdValue < 200){
-      Serial.println("Color detectado: Morado");
-      ejecutaLedRGB(128, 0, 128);
+    DecisionTreeRGB(redValue, greenValue, blueValue);
+  }
+
+  void DecisionTreeRGB(int R, int G, int B){
+    if (B > 210){
+      if (R > 217){
+        if (R > 250){
+          if (B > 229){
+            Serial.println("Color detectado: ROSA");
+            ejecutaLedRGB(R, G, B); // Rosa
+          }
+          else{
+            if (G > 220){
+              Serial.println("Color detectado: AMARILLO");
+            ejecutaLedRGB(R, G, B); // Amarillo
+            }
+            else{
+              Serial.println("Color detectado: ROSA");
+              ejecutaLedRGB(R, G, B); // Rosa
+            }
+          }
+        }
+        else{
+          Serial.println("Color detectado: MORADO");
+          ejecutaLedRGB(R, G, B); // Morado
+        }
+      }
+      else{
+        Serial.println("Color detectado: AZUL");
+        ejecutaLedRGB(R, G, B); // Azul
+      }
     }
-    else if (redValue > 250 && greenValue + thresholdValue < 200 && blueValue + thresholdValue < 200){
-      Serial.println("Color detectado: Rosa");
-      ejecutaLedRGB(255, 105, 180);
-    }
-    else if (redValue > 200 && greenValue > 200 && blueValue + thresholdValue < 200){
-      Serial.println("Color detectado: Amarillo");
-      ejecutaLedRGB(255, 255, 0);
-    }
-    else if (redValue > 250 && greenValue + thresholdValue < 200 && blueValue + thresholdValue < 150){
-      Serial.println("Color detectado: Naranja");
-      ejecutaLedRGB(255, 165, 0);
-    }
-    else if (redValue > 250 && greenValue + thresholdValue < 150 && blueValue + thresholdValue < 150){
-      Serial.println("Color detectado: Rojo");
-      ejecutaLedRGB(255, 0, 0);
-    }
-    else if(redValue + thresholdValue < 150 && greenValue > 250 && blueValue + thresholdValue < 150){
-      Serial.print("Color detectado: Verde");
-      ejecutaLedRGB(0, 255, 0);
-    }
-    else if (redValue < thresholdValue && greenValue < thresholdValue && blueValue < thresholdValue){
-      Serial.println("Color detectado: Negro");
-      ejecutaLedRGB(0, 0, 255);
-    }
-    else {
-      Serial.println("Color indeterminado");
-      ejecutaLedRGB(255, 255, 255);
+    else{
+      if (G > 205){
+        if (G > 235){
+          if (B > 200){
+            Serial.println("Color detectado: AMARILLO");
+            ejecutaLedRGB(R, G, B); // Amarillo
+          }
+          else{
+            Serial.println("Color detectado: VERDE");
+            ejecutaLedRGB(R, G, B); // Verde
+          }
+        }
+        else{
+          Serial.println("Color detectado: NARANJA");
+          ejecutaLedRGB(R, G, B); // Naranja
+        }
+      }
+      else{
+        if (B > 177){
+          if (R > 185){
+            Serial.println("Color detectado: VERDE");
+            ejecutaLedRGB(R, G, B); // Verde
+          }
+          else{
+            Serial.println("Color detectado: MORADO");
+            ejecutaLedRGB(R, G, B); // Morado
+          }
+        }
+        else{
+          Serial.println("Color detectado: ROJO");
+          ejecutaLedRGB(R, G, B); // Rojo
+        }
+      }
     }
   }
 
@@ -417,11 +451,14 @@ void setup() {
 }
 
 void loop() {
-  i = 0;
+  /*i = 0;
   prevError = 0;
   while(DetectLine()){
     PIDLinea();
   }
-  delay(200);
+  delay(200);*/
+
+  //calibraSensorRGB();
+  leeSensorRGB();
 
 }

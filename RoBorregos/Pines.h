@@ -9,12 +9,12 @@
   #define S3 50
   #define SensorOut 4
   // Calibration Values
-    const int redMin = 26; // Red minimum value
-    const int redMax = 206; // Red maximum value
-    const int greenMin = 28; // Green minimum value
-    const int greenMax = 276; // Green maximum value
-    const int blueMin = 22; // Blue minimum value
-    const int blueMax = 213; // Blue maximum value
+    const int redMin = 28; // Red minimum value
+    const int redMax = 296; // Red maximum value
+    const int greenMin = 30; // Green minimum value
+    const int greenMax = 336; // Green maximum value
+    const int blueMin = 24; // Blue minimum value
+    const int blueMax = 259; // Blue maximum value
   // Threshold Variable
     const int thresholdValue = 25; // Error acceptance
 // - Dist Sensors Trigger------------------------------------------- 
