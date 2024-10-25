@@ -339,6 +339,7 @@
     UpdateInfraRedSensors();
     float error = -2*InfraRedValues[0] - 1*InfraRedValues[1] + 1*InfraRedValues[3] + 2*InfraRedValues[4];
     error = error == 0 ? prevError : error;
+    error = InfraRedValues[2] ? 0 : error;
     p = error ;
     i += error;
     i = error * i < 0 ? 0 : i;
@@ -451,14 +452,12 @@ void setup() {
 }
 
 void loop() {
-  /*i = 0;
-  prevError = 0;
+
   while(DetectLine()){
     PIDLinea();
   }
-  delay(200);*/
 
   //calibraSensorRGB();
-  leeSensorRGB();
+  //leeSensorRGB();
 
 }

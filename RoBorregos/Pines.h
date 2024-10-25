@@ -43,6 +43,6 @@
   #define servoRight 9
   #define servoLeft 10
 // - PID
-  const float kp = 1;
-  const float ki = 0.0001;
-  const float kd = 0.4;
+  const float kp = 0.55;
+  const float ki = 0.0003;
+  const float kd = 0.5;
