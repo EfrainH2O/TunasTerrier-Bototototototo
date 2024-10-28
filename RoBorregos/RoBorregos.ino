@@ -15,7 +15,6 @@
     bool InfraRedValues[NInfraRedSensor];
   // - Servos
     #include <Servo.h>
-    Servo Rservo;
     Servo Lservo;
   // - PID
     float p;
@@ -218,8 +217,8 @@
     delay(60);  
     tcs.getRGB(&red, &green, &blue);
     tcs.setInterrupt(true);  
-    Serial.print(red); Serial.print(" "); Serial.print(green); Serial.print(" "); Serial.println(blue);
-    return blue > green && red < blue;
+    //Serial.print(red); Serial.print(" "); Serial.print(green); Serial.print(" "); Serial.println(blue);
+    return blue > green+25 && red+25 < blue ;
   }
 
   float mapfloat(float x, float in_min, float in_max, float out_min, float out_max){
@@ -270,7 +269,9 @@
   void UpdateInfraRedSensors(){
       for(int i = 0; i < NInfraRedSensor; i++){
         InfraRedValues[i] = digitalRead(InfraRedSensors[i]); 
+        Serial.print( InfraRedValues[i]); Serial.print("\t");
       }
+      Serial.print("\n");
   }
 
   bool DetectLine(){
@@ -306,36 +307,28 @@
   void GoFront(double dist){
     LeftPulses = 0;
     RightPulses = 0;
-    int blockDist = dist/3.14/6.75*pulses_per_turn;   //Ponemos operaciones para ponerlo en terminos de bloques
+    int blockDist = dist/3.14/6.75*(float)pulses_per_turn;   //Ponemos operaciones para ponerlo en terminos de bloques
     double RightError = 0;
-    double LeftError = 0;
     while(LeftPulses < blockDist || RightPulses < blockDist){
       RightError = (blockDist - RightPulses) ;
-      LeftError = (blockDist - LeftPulses); // map(LeftError, 0, blockDist, 0, 1);
-      Serial.print("Lpulses: "); Serial.print(LeftPulses);Serial.print("\tRPulses:"); Serial.print(RightPulses);
-      LeftError = LeftError/(float)(blockDist);
       RightError = RightError/(float)(blockDist);
       //El error puede ser cambiado entre calcular la distancia hacia la pared o nomas con los encoders
-      RightError = RightError <0.3 && RightError > 0 ? 0.3 : RightError;
-      LeftError = LeftError <0.3 && LeftError > 0 ? 0.3 : LeftError;
-      RightError = RightError < 0 ? 0 : RightError;
-      LeftError = LeftError < 0 ? 0 : LeftError;
-      Drive(LeftError, RightError);
-      Serial.print("\t\t\tLError: "); Serial.print(LeftError);Serial.print("\tRIghtError:"); Serial.println(RightError);
-    }
-    while(LeftPulses < RightPulses){
-      Drive(0.3,0);
-      Serial.print("Lpulses: "); Serial.print(LeftPulses);Serial.print("\tRPulses:"); Serial.println(RightPulses);
-    }
-    while(RightPulses < LeftPulses){
-      Serial.print("Lpulses: "); Serial.print(LeftPulses);Serial.print("\tRPulses:"); Serial.println(RightPulses);
-      Drive(0,0.3);
+      RightError = RightError <0.4 && RightError > 0 ? 0.4 : RightError;
+      RightError = RightError < 0 ? 0 : RightError;      
+      Drive(RightError, RightError);
     }
     Drive(0,0);
   }
 
+  void GoRight(){
+    LeftPulses = 0;
+    RightPulses = 0;
+    while(RightPulses < 150){
+      Drive(1,-1);
+    }
+  }
+
   void PIDLinea(){
-    
     UpdateInfraRedSensors();
     float error = -2*InfraRedValues[0] - 1*InfraRedValues[1] + 1*InfraRedValues[3] + 2*InfraRedValues[4];
     error = error == 0 ? prevError : error;
@@ -447,17 +440,20 @@ void setup() {
       attachInterrupt(digitalPinToInterrupt(RightEncoder), Rcount, FALLING );
       attachInterrupt(digitalPinToInterrupt(LeftEncoder), Lcount, FALLING );
   // - Servo
-      //Rservo.attach(servoRight);
       Lservo.attach(servoLeft);
 }
 
 void loop() {
-
+/*
   while(DetectLine()){
     PIDLinea();
-  }
-
+  }*/
+ // Serial.print(FrontDistance()); Serial.print("\t");Serial.print(LeftDistance());Serial.print("\t");Serial.println(RightDistance());
+//UpdateInfraRedSensors();
+//Drive(1,1);
   //calibraSensorRGB();
   //leeSensorRGB();
+  GoFront(45);
+  delay(10000);
 
 }

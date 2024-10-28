@@ -18,13 +18,13 @@
   // Threshold Variable
     const int thresholdValue = 25; // Error acceptance
 // - Dist Sensors Trigger------------------------------------------- 
-  #define FrontDistSensorTrigger 12
-  #define LeftDistSensorTrigger 11
-  #define RightDistSensorTrigger 13
+  #define FrontDistSensorTrigger 11 //
+  #define LeftDistSensorTrigger 13 //
+  #define RightDistSensorTrigger 12
 // - Dist Sensors Echo-------------------------------------------
-  #define FrontDistSensorEcho 23
-  #define LeftDistSensorEcho 25
-  #define RightDistSensorEcho 27
+  #define FrontDistSensorEcho 25
+  #define LeftDistSensorEcho 27
+  #define RightDistSensorEcho 23
 // - Motors
   #define RightA 32
   #define RightB 34
@@ -40,7 +40,6 @@
   const int NInfraRedSensor = 5;
   int InfraRedSensors[] = {22, 24, 26, 28, 30};
 // - Servo
-  #define servoRight 9
   #define servoLeft 10
 // - PID
   const float kp = 0.55;
