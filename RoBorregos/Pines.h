@@ -45,3 +45,5 @@
   const float kp = 0.55;
   const float ki = 0.0003;
   const float kd = 0.5;
+// - Wall PID
+  const float wallkp = 0.3;

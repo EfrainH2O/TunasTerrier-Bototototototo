@@ -21,6 +21,10 @@
     float i;
     float d;
     float prevError;
+  // - Laberinto
+  int mainSensor = 1;
+  bool Ball = false;
+  char Color;
 
 // - Subsistemas
   void calibraSensorRGB(){
@@ -46,7 +50,7 @@
     Serial.println(bluePW);
   }
 
-  void leeSensorRGB(){
+  int leeSensorRGB(){
     // Variables para la Medida del Ancho de Pulso de Color
     int redPW = 0;
     int greenPW = 0;
@@ -98,6 +102,7 @@
     Serial.println(blueValue);
     // Mapeo de colores
     DecisionTreeRGB(redValue, greenValue, blueValue);
+    return 1;
   }
 
   void DecisionTreeRGB(int R, int G, int B){
@@ -318,6 +323,13 @@
     }
     Drive(0,0);
   }
+  void FollowWall(char side){
+    int error = side == 'r' ? RightDistance() : LeftDistance();
+    error > 14 ? 14 : error;
+    error = 7 - error;
+    float kin = (float)error * wallkp;
+    Drive(0.6 + kin, 0.6 -kin);
+  }
 
   void Turn(char input){
     LeftPulses = 0;
@@ -337,7 +349,7 @@
     }
     Drive(0,0);
   }
-
+// PID pista B
   void PIDLinea(){
     UpdateInfraRedSensors();
     float error = -2*InfraRedValues[0] - 1*InfraRedValues[1] + 1*InfraRedValues[3] + 2*InfraRedValues[4];
@@ -356,7 +368,7 @@
     void movFrontSensor() {
       if (FrontDistance() > 5) { GoFront(25); }
       else {
-        Turn(l);
+        Turn('l');
         GoFront(25);
         mainSensor = 1;
       }
@@ -366,12 +378,12 @@
     void movRightSensor() {
       if (RightDistance() > 5) {
         if (FrontDistance() > 30) { 
-          Turn(l);
+          Turn('l');
           if (Ball == false) { catchBall(); }
           else { endMaze(); }
         }
         else { 
-          Turn(r);
+          Turn('r');
           GoFront(25); 
           }
       }
@@ -382,12 +394,12 @@
     void movLeftSensor(){
       if (LeftDistance() > 5) {
         if (FrontDistance() > 30) { 
-          Turn(r);
+          Turn('r');
           if (Ball == false) { catchBall(); }
           else { endMaze(); }
         }
         else { 
-          Turn(l);
+          Turn('l');
           GoFront(25); 
           }
       }
@@ -404,16 +416,16 @@
 
   // Secuencia para capturar la pelota y ubicar al robot en su posicion previa
     void catchBall(){
-      while (isBall() == false){ Drive(-1, -1); }
+      while (IsBall() == false){ Drive(-1, -1); }
       Ball = true;
       ActivateServos(180);
       GoFront(25);
       if (mainSensor == 1){
-        Turn(r);
+        Turn('r');
         mainSensor = 2;
       }
       else {
-        Turn(l);
+        Turn('l');
         mainSensor = 1;
       }
     }
@@ -422,23 +434,23 @@
     void endMaze(){
       Drive(-1, -1);
       if (leeSensorRGB() == 1) {
-        Color = "red";
+        Color = 'r';
       }
       else {
         GoFront(25);
-        Color = "green";
+        Color = 'g';
       }
     }
 
   // Resolucion de Pista A
-    void resuelveLaberinto(int mainSensor){
+    void resuelveLaberinto(){
       while(Ball == false){ // Fase 1: Busqueda de pelota
         verfNegro();
         if(mainSensor == 0){ movFrontSensor(); }
         else if (mainSensor == 1){ movRightSensor(); }
         else { movLeftSensor(); }
       }
-      while(Color != "red"){
+      while(Color != 'r'){
         verfNegro();
         if (mainSensor == 1){ movRightSensor(); }
         else { movLeftSensor(); }
@@ -495,9 +507,10 @@ void loop() {
 //UpdateInfraRedSensors();
 //Drive(1,1);
   //calibraSensorRGB();
-  leeSensorRGB();
+//  leeSensorRGB();
   //GoFront(25);
-  //delay(10000);
+  FollowWall('l');
+
 
 
 }
