@@ -320,12 +320,24 @@
     Drive(0,0);
   }
 
-  void GoRight(){
+  void Turn(char input){
     LeftPulses = 0;
     RightPulses = 0;
-    while(RightPulses < 150){
-      Drive(1,-1);
+    int direction = input == 'r' ? 1:-1;
+    while(RightPulses < 23){
+      Drive(1*direction,-1*direction);
     }
+    Drive(0,0);
+  }
+
+  void UTurn(){
+    LeftPulses = 0;
+    RightPulses = 0;
+    int direction = input == 'r' ? 1:-1;
+    while(RightPulses < 43){
+      Drive(1*direction,-1*direction);
+    }
+    Drive(0,0);
   }
 
   void PIDLinea(){
@@ -453,7 +465,7 @@ void loop() {
 //Drive(1,1);
   //calibraSensorRGB();
   //leeSensorRGB();
-  GoFront(45);
-  delay(10000);
+  //GoRight();
+
 
 }
