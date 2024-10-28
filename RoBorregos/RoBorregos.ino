@@ -288,7 +288,6 @@
     Serial.print("Adelante");
     for(int i = -10; i < Limit; i+=10){
       Lservo.write(-i);
-
     }
     delay(300);
   }
@@ -333,9 +332,8 @@
   void UTurn(){
     LeftPulses = 0;
     RightPulses = 0;
-    int direction = input == 'r' ? 1:-1;
     while(RightPulses < 43){
-      Drive(1*direction,-1*direction);
+      Drive(1,-1);
     }
     Drive(0,0);
   }
@@ -355,11 +353,11 @@
   }
 // Algoritmo de resolucion de Pista A
   // Secuencia para resolver Pista A con "front" como sensor main
-/*    void movFrontSensor() {
-      if (FrontDistance() > 5) { goFront(); }
+    void movFrontSensor() {
+      if (FrontDistance() > 5) { GoFront(25); }
       else {
-        goLeft();
-        goFront();
+        Turn(l);
+        GoFront(25);
         mainSensor = 1;
       }
     }
@@ -367,37 +365,68 @@
   // Secuencia para resolver Pista A con "right" como sensor main
     void movRightSensor() {
       if (RightDistance() > 5) {
-        if (FrontDistance() > 30) { catchBall(); }
-        else { goFront(); }
+        if (FrontDistance() > 30) { 
+          Turn(l);
+          if (Ball == false) { catchBall(); }
+          else { endMaze(); }
+        }
+        else { 
+          Turn(r);
+          GoFront(25); 
+          }
       }
-      else { 
-        goRight();
-        goFront();
-      }
+      else { GoFront(25); }
     }
 
   // Secuencia para resolver Pista A con "left" como main
     void movLeftSensor(){
       if (LeftDistance() > 5) {
-        if (FrontDistance() > 30) { catchBall(); }
-        else { goFront(); }
+        if (FrontDistance() > 30) { 
+          Turn(r);
+          if (Ball == false) { catchBall(); }
+          else { endMaze(); }
+        }
+        else { 
+          Turn(l);
+          GoFront(25); 
+          }
       }
-      else {
-        goLeft();
-        goFront();
-      }
+      else { GoFront(25); }
     }
 
   // Secuencia para verificar y evitar la linea negra de la Pista A
     void verfNegro(){
       if (DetectLine()){
-        goInverted();
-        if (main == 1){
-          main = 2;
-        }
-        else {
-          main = 1;
-        }
+        UTurn();
+        mainSensor = (mainSensor == 1) ? 1 : 2;
+      }
+    }
+
+  // Secuencia para capturar la pelota y ubicar al robot en su posicion previa
+    void catchBall(){
+      while (isBall() == false){ Drive(-1, -1); }
+      Ball = true;
+      ActivateServos(180);
+      GoFront(25);
+      if (mainSensor == 1){
+        Turn(r);
+        mainSensor = 2;
+      }
+      else {
+        Turn(l);
+        mainSensor = 1;
+      }
+    }
+
+  // Secuencia para terminar el laberinto
+    void endMaze(){
+      Drive(-1, -1);
+      if (leeSensorRGB() == 1) {
+        Color = "red";
+      }
+      else {
+        GoFront(25);
+        Color = "green";
       }
     }
 
@@ -406,14 +435,16 @@
       while(Ball == false){ // Fase 1: Busqueda de pelota
         verfNegro();
         if(mainSensor == 0){ movFrontSensor(); }
-        else if (mainSensor == 1){ moveRightSensor(); }
-        else { moveLeftSensor(); }
+        else if (mainSensor == 1){ movRightSensor(); }
+        else { movLeftSensor(); }
       }
-      while(Color != "green"){
+      while(Color != "red"){
         verfNegro();
+        if (mainSensor == 1){ movRightSensor(); }
+        else { movLeftSensor(); }
       }
     }
-*/
+
 void setup() {
   
       Serial.begin(9600);
@@ -464,8 +495,9 @@ void loop() {
 //UpdateInfraRedSensors();
 //Drive(1,1);
   //calibraSensorRGB();
-  //leeSensorRGB();
-  //GoRight();
+  leeSensorRGB();
+  //GoFront(25);
+  //delay(10000);
 
 
 }
