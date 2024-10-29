@@ -292,7 +292,7 @@
   void ActivateServos(int Limit){
     Serial.print("Adelante");
     for(int i = -10; i < Limit; i+=10){
-      Lservo.write(-i);
+      Lservo.write(+i);
     }
     delay(300);
   }
@@ -325,10 +325,11 @@
   }
   void FollowWall(char side){
     int error = side == 'r' ? RightDistance() : LeftDistance();
+    int dir = side == 'r' ? -1: 1;
     error > 14 ? 14 : error;
     error = 7 - error;
     float kin = (float)error * wallkp;
-    Drive(0.6 + kin, 0.6 -kin);
+    Drive(0.6 + kin*dir, 0.6 -kin*dir);
   }
 
   void Turn(char input){
@@ -344,7 +345,7 @@
   void UTurn(){
     LeftPulses = 0;
     RightPulses = 0;
-    while(RightPulses < 43){
+    while(RightPulses < 41){
       Drive(1,-1);
     }
     Drive(0,0);
@@ -496,20 +497,22 @@ void setup() {
       attachInterrupt(digitalPinToInterrupt(LeftEncoder), Lcount, FALLING );
   // - Servo
       Lservo.attach(servoLeft);
+     Lservo.write(-20);
 }
 
 void loop() {
-/*
+  /*
   while(DetectLine()){
     PIDLinea();
   }*/
- // Serial.print(FrontDistance()); Serial.print("\t");Serial.print(LeftDistance());Serial.print("\t");Serial.println(RightDistance());
-//UpdateInfraRedSensors();
-//Drive(1,1);
+  // Serial.print(FrontDistance()); Serial.print("\t");Serial.print(LeftDistance());Serial.print("\t");Serial.println(RightDistance());
+  //UpdateInfraRedSensors();
+  //Drive(1,1);
   //calibraSensorRGB();
-//  leeSensorRGB();
-  //GoFront(25);
-  FollowWall('l');
+  //leeSensorRGB();
+  FollowWall('r');
+
+
 
 
 
