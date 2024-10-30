@@ -1,9 +1,9 @@
-//Pre - SetUp
+// Pre SetUp
   #include "Pines.h"
   // Small Color Sensor
     #include <Wire.h>
     #include "Adafruit_TCS34725.h"
-  Adafruit_TCS34725 tcs= Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_101MS, TCS34725_GAIN_4X);
+    Adafruit_TCS34725 tcs= Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_101MS, TCS34725_GAIN_4X);
   // Encoders
     // Right
       volatile byte RightPulses;
@@ -20,6 +20,11 @@
     int mainSensor = 1;
     bool Ball = false;
     char Color;
+  // Pista B
+    float p;
+    float i;
+    float d;
+    float prevError;
 
 // Subsistemas
   void calibraSensorRGB() {
@@ -28,13 +33,13 @@
     int greenPW = 0;
     int bluePW = 0;
     // Lee el ancho de pulso de ROJO
-    redPW = getRedPW();
+    redPW = getRGBPW(-1);
     delay(200);
     // Lee el ancho de pulso de VERDE
-    greenPW = getGreenPW();
+    greenPW = getRGBPW(1);
     delay(200);
     // Lee el ancho de pulso de AZUL
-    bluePW = getBluePW();
+    bluePW = getRGBPW(0);
     delay(200);
     // Imprimir los valores en el Serial Monitor
     Serial.print("Red PW = ");
@@ -334,6 +339,22 @@
     }
     Drive(0, 0);
   }
+
+// Algoritmo para Resolver Pista B
+  // PID
+    void PIDLinea() {
+      UpdateInfraRedSensors();
+      float error = -2 * InfraRedValues[0] - 1 * InfraRedValues[1] + 1 * InfraRedValues[3] + 2 * InfraRedValues[4];
+      error = error == 0 ? prevError : error;
+      error = InfraRedValues[2] ? 0 : error;
+      p = error;
+      i += error;
+      i = error * i < 0 ? 0 : i;
+      d = error - prevError;
+      prevError = error;
+      float total = kp * p + ki * i + kd * d;
+      Drive(0.8 + total, 0.8 - total);
+    }
 
 // Algoritmo para Resolver Pista A
   // Secuencia para resolver Pista A con "front" como sensor main
