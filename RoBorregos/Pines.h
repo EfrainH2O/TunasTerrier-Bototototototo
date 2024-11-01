@@ -50,5 +50,5 @@
   const float wallki = 0.001;
   const float wallkd = 0.3;
   const int MAX_WAL_DIST = 15;
-  const int MAX_FRONT_DIST = 8;
-  const int DistBetweenBlock = 23;
+  const int MAX_FRONT_DIST = 15;
+  const int DistBetweenBlock = 30;

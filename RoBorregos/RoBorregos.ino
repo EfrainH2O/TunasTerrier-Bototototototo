@@ -288,11 +288,11 @@
       RightError = RightError / (float)(blockDist);
       //El error puede ser cambiado entre calcular la distancia hacia la pared o nomas con los encoders
       RightError = RightError < 0.4 && RightError > 0 ? 0.4 : RightError;
-      Serial.print("L:\t");Serial.print(LeftPulses);Serial.print("\tR:\t");Serial.println(RightPulses);
+     // Serial.print("L:\t");Serial.print(LeftPulses);Serial.print("\tR:\t");Serial.println(RightPulses);
       Drive(RightError, RightError);
     }
     Drive(0, 0);
-    Serial.print("L:\t");Serial.print(LeftPulses);Serial.print("\tR:\t");Serial.println(RightPulses);
+   // Serial.print("L:\t");Serial.print(LeftPulses);Serial.print("\tR:\t");Serial.println(RightPulses);
   }
 
   void FollowWall(char side, int dist) {
@@ -306,9 +306,11 @@
     float RightError;
     while (LeftPulses < blockDist || RightPulses < blockDist) {
       float error = side == 'r' ? RightDistance() : LeftDistance();
-      error = error > 14 ? 14 : error;
+      int par = FrontDistance();
+      if(error > MAX_WAL_DIST){return;}
+      if(par < MAX_FRONT_DIST){return;}
       error = error ? error : -1;
-      error = 7 - error;
+      error = MAX_WAL_DIST/2 - error;
       wallI += error;
       wallI = error * wallI < 0 ? 0 : wallI;
       wallDer = error - wallprevError;
@@ -478,18 +480,28 @@
     int rightDistance = RightDistance();
     int leftDistance = LeftDistance();
     int frontDistance = FrontDistance();
-      if(rightDistance < MAX_WAL_DIST && frontDistance > MAX_FRONT_DIST){
+    Serial.print(rightDistance); Serial.print(leftDistance);Serial.println(frontDistance);
+      if(rightDistance <= MAX_WAL_DIST && frontDistance >= MAX_FRONT_DIST){
+          ejecutaLedRGB(0,0,150);
           FollowWall('r', DistBetweenBlock);
       }
       else if(rightDistance > MAX_WAL_DIST){
+        ejecutaLedRGB(0,150,150);
           Turn('r');
+          delay(1000);
           GoFront(DistBetweenBlock);
       }else if (leftDistance > MAX_WAL_DIST){
+        ejecutaLedRGB(0,150,0);
           Turn('l');
+          delay(1000);
           GoFront(DistBetweenBlock);
       }else{
+        ejecutaLedRGB(150,0,150);
           UTurn();
+          GoFront(DistanceBetweenBlock);
       }
+      delay(2000);
+      ejecutaLedRGB(250,250,250);
   }
 
 void setup() {
@@ -535,7 +547,10 @@ void setup() {
 }
 
 void loop() {
-  // resuelveLaberinto();
-  // FollowWall('r', 50);
-  leeSensorRGB();
+  RightHandSolver();
+ // FollowWall('r', 50);
+  delay(2000);
+  //leeSensorRGB();
+
+
 }
