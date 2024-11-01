@@ -63,34 +63,30 @@
     int redValueSum = 0;
     int greenValueSum = 0;
     int blueValueSum = 0;
-    // Lee el ancho de pulso de ROJO
     for (int i = 0; i < 5; i++) {
+      // Lee el ancho de pulso de ROJO
       redPW = getRGBPW(-1);
       // Mapea el valor desde 0-255
       redValue = map(redPW, redMin, redMax, 255, 0);
       redValueSum += redValue;
       delay(200);
-    }
-    // Promedia la suma de los 5 valores del color ROJO
-    redValue = redValueSum / 5;
-    // Lee el ancho de pulso de VERDE
-    for (int j = 0; j < 5; j++) {
+      // Lee el ancho de pulso de VERDE
       greenPW = getRGBPW(1);
       // Mapea el valor desde 0-255
       greenValue = map(greenPW, greenMin, greenMax, 255, 0);
       greenValueSum += greenValue;
       delay(200);
-    }
-    // Promedia la suma de los 5 valores del color VERDE
-    greenValue = greenValueSum / 5;
-    // Lee el ancho de pulso de AZUL
-    for (int h = 0; h < 5; h++) {
+      // Lee el ancho de pulso de AZUL
       bluePW = getRGBPW(0);
       // Mapea el valor desde 0-255
       blueValue = map(bluePW, blueMin, blueMax, 255, 0);
       blueValueSum += blueValue;
       delay(200);
     }
+    // Promedia la suma de los 5 valores del color ROJO
+    redValue = redValueSum / 5;
+    // Promedia la suma de los 5 valores del color VERDE
+    greenValue = greenValueSum / 5;
     // Promedia la suma de los 5 valores del color AZUL
     blueValue = blueValueSum / 5;
     // Imprimir los valores finales en el Serial Monitor
@@ -105,17 +101,17 @@
   }
 
   int DecisionTreeRGB(int R, int G, int B) {
-    if (G >= 241) {
+    if (G >= 239) {
       Serial.println("Color detectado: AMARILLO");
       ejecutaLedRGB(255, 255, 0); // Amarillo
     } else {
-      if (R >= 251) {
-        if (B >= 213) {
+      if (R >= 245) {
+        if (B >= 200) {
           Serial.println("Color detectado: ROSA");
           ejecutaLedRGB(255, 128, 255); // Rosa
         } else {
           Serial.println("Color detectado: NARANJA");
-          ejecutaLedRGB(255, 128, 0); // Naranja
+          ejecutaLedRGB(255, 75, 0); // Naranja
         }
       } else {
         if (B >= 174) {
