@@ -105,66 +105,35 @@
   }
 
   int DecisionTreeRGB(int R, int G, int B) {
-    if (B > 210) {
-      if (R > 217) {
-        if (R > 250) {
-          if (B > 229) {
-            Serial.println("Color detectado: ROSA");
-            ejecutaLedRGB(255, 192, 203);  // Rosa
-            return 3;
-          } else {
-            if (G > 220) {
-              Serial.println("Color detectado: AMARILLO");
-              ejecutaLedRGB(255, 255, 0);  // Amarillo
-              return 4;
-            } else {
-              Serial.println("Color detectado: ROSA");
-              ejecutaLedRGB(255, 198, 203);  // Rosa
-              return 3;
-            }
-          }
-        } else {
-          Serial.println("Color detectado: MORADO");
-          ejecutaLedRGB(255, 0, 255);  // Morado
-          return 5;
-        }
-      } else {
-        Serial.println("Color detectado: AZUL");
-        ejecutaLedRGB(0, 0, 255);  // Azul
-        return 2;
-      }
+    if (G >= 241) {
+      Serial.println("Color detectado: AMARILLO");
+      ejecutaLedRGB(255, 255, 0); // Amarillo
     } else {
-      if (G > 205) {
-        if (G > 235) {
-          if (B > 200) {
-            Serial.println("Color detectado: AMARILLO");
-            ejecutaLedRGB(255, 255, 0);  // Amarillo
-            return 4;
-          } else {
-            Serial.println("Color detectado: VERDE");
-            ejecutaLedRGB(0, 255, 0);  // Verde
-            return 1;
-          }
+      if (R >= 251) {
+        if (B >= 213) {
+          Serial.println("Color detectado: ROSA");
+          ejecutaLedRGB(255, 128, 255); // Rosa
         } else {
           Serial.println("Color detectado: NARANJA");
-          ejecutaLedRGB(255, 128, 0);  // Naranja
-          return 6;
+          ejecutaLedRGB(255, 128, 0); // Naranja
         }
       } else {
-        if (B > 177) {
-          if (R > 185) {
-            Serial.println("Color detectado: VERDE");
-            ejecutaLedRGB(0, 255, 0);  // Verde
-            return 1;
+        if (B >= 174) {
+          if (B >= 188) {
+            if (B >= 245) {
+              Serial.println("Color detectado: MORADO");
+              ejecutaLedRGB(255, 0, 255); // Morado
+            } else {
+              Serial.println("Color detectado: AZUL");
+              ejecutaLedRGB(0, 0, 255); // Azul
+            }
           } else {
             Serial.println("Color detectado: MORADO");
-            ejecutaLedRGB(255, 0, 255);  // Morado
-            return 5;
+            ejecutaLedRGB(255, 0, 255); // Morado
           }
         } else {
           Serial.println("Color detectado: ROJO");
-          ejecutaLedRGB(255, 0, 0);  // Rojo
-          return 0;
+          ejecutaLedRGB(255, 0, 0); // Rojo
         }
       }
     }
@@ -552,7 +521,7 @@ void setup() {
 }
 
 void loop() {
-  //resuelveLaberinto();
-  FollowWall('r', 50);
-
+  // resuelveLaberinto();
+  // FollowWall('r', 50);
+  leeSensorRGB();
 }
