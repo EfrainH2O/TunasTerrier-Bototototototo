@@ -46,4 +46,9 @@
   const float ki = 0.0003;
   const float kd = 0.5;
 // - Wall PID
-  const float wallkp = 0.3;
+  const float wallkp = 0.6;
+  const float wallki = 0.001;
+  const float wallkd = 0.3;
+  const int MAX_WAL_DIST = 15;
+  const int MAX_FRONT_DIST = 8;
+  const int DistBetweenBlock = 23;

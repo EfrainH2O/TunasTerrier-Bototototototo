@@ -305,37 +305,63 @@
       RightError = RightError / (float)(blockDist);
       //El error puede ser cambiado entre calcular la distancia hacia la pared o nomas con los encoders
       RightError = RightError < 0.4 && RightError > 0 ? 0.4 : RightError;
-      RightError = RightError < 0 ? 0 : RightError;
+      Serial.print("L:\t");Serial.print(LeftPulses);Serial.print("\tR:\t");Serial.println(RightPulses);
       Drive(RightError, RightError);
     }
     Drive(0, 0);
+    Serial.print("L:\t");Serial.print(LeftPulses);Serial.print("\tR:\t");Serial.println(RightPulses);
   }
 
-  void FollowWall(char side) {
-    int error = side == 'r' ? RightDistance() : LeftDistance();
+  void FollowWall(char side, int dist) {
+    LeftPulses = 0;
+    RightPulses = 0;
+    int blockDist = dist / 3.14 / 6.75 * (float)pulses_per_turn;
+    float wallI = 0;
+    float wallprevError = 0;
+    float wallDer = 0;
     int dir = side == 'r' ? -1 : 1;
-    error = error > 14 ? 14 : error;
-    error = error ? error : -1;
-    error = 7 - error;
-    float kin = (float)error * wallkp;
-    Drive(0.6 + kin * dir, 0.6 - kin * dir);
+    float RightError;
+    while (LeftPulses < blockDist || RightPulses < blockDist) {
+      float error = side == 'r' ? RightDistance() : LeftDistance();
+      error = error > 14 ? 14 : error;
+      error = error ? error : -1;
+      error = 7 - error;
+      wallI += error;
+      wallI = error * wallI < 0 ? 0 : wallI;
+      wallDer = error - wallprevError;
+      float kin = error * wallkp + wallI * wallki + wallDer*wallkd;
+      RightError = (blockDist - RightPulses);
+      RightError = RightError / (float)(blockDist);
+      //El error puede ser cambiado entre calcular la distancia hacia la pared o nomas con los encoders
+      RightError = RightError < 0.4 && RightError > 0 ? 0.4 : RightError;
+      //Serial.print("L:\t");Serial.print(LeftPulses);Serial.print("\tR:\t");Serial.println(RightPulses);
+      Drive(RightError + kin *dir*RightError, RightError - kin *dir* RightError);
+    }
+    Drive(0, 0);
+    
   }
 
   void Turn(char input) {
     LeftPulses = 0;
     RightPulses = 0;
     int direction = input == 'r' ? 1 : -1;
-    while (RightPulses < 23) {
-      Drive(1 * direction, -1 * direction);
+    float distance = 16;
+    float RightError;
+    while (RightPulses < distance) {
+      RightError = (distance - RightPulses);
+      RightError = RightError / distance;
+      //El error puede ser cambiado entre calcular la distancia hacia la pared o nomas con los encoders
+      RightError = RightError < 0.5 && RightError > 0 ? 0.5 : RightError;
+      Drive( direction * RightError, -RightError * direction);
     }
-    Drive(0, 0);
+    Drive(0, 0);     
   }
 
   void UTurn() {
     LeftPulses = 0;
     RightPulses = 0;
     while (RightPulses < 41) {
-      Drive(1, -1);
+      Drive(0.7, -0.7);
     }
     Drive(0, 0);
   }
@@ -464,6 +490,24 @@
       while (true) { Drive(0, 0); }
     }
 
+// Algoritmo Pista C
+  void RightHandSolver(){
+    int rightDistance = RightDistance();
+    int leftDistance = LeftDistance();
+    int frontDistance = FrontDistance();
+      if(rightDistance < MAX_WAL_DIST && frontDistance > MAX_FRONT_DIST){
+          FollowWall('r', DistBetweenBlock);
+      }
+      else if(rightDistance > MAX_WAL_DIST){
+          Turn('r');
+          GoFront(DistBetweenBlock);
+      }else if (leftDistance > MAX_WAL_DIST){
+          Turn('l');
+          GoFront(DistBetweenBlock);
+      }else{
+          UTurn();
+      }
+  }
 
 void setup() {
   Serial.begin(9600);
@@ -508,5 +552,7 @@ void setup() {
 }
 
 void loop() {
-  resuelveLaberinto();
+  //resuelveLaberinto();
+  FollowWall('r', 50);
+
 }
