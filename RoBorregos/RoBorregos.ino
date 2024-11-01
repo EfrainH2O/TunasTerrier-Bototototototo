@@ -25,6 +25,17 @@
     float i;
     float d;
     float prevError;
+  // Pista C
+    int colores[7];
+    /*
+    0 = rojo
+    1 = verde
+    2 = amarillo
+    3 = naranja
+    4 = rosa
+    5 = morado
+    6 = azul
+    */
 
 // Subsistemas
   void calibraSensorRGB() {
@@ -104,14 +115,17 @@
     if (G >= 239) {
       Serial.println("Color detectado: AMARILLO");
       ejecutaLedRGB(255, 255, 0); // Amarillo
+      return 2;
     } else {
       if (R >= 245) {
         if (B >= 200) {
           Serial.println("Color detectado: ROSA");
           ejecutaLedRGB(255, 128, 255); // Rosa
+          return 4;
         } else {
           Serial.println("Color detectado: NARANJA");
           ejecutaLedRGB(255, 75, 0); // Naranja
+          return 3;
         }
       } else {
         if (B >= 174) {
@@ -119,17 +133,21 @@
             if (B >= 245) {
               Serial.println("Color detectado: MORADO");
               ejecutaLedRGB(255, 0, 255); // Morado
+              return 5;
             } else {
               Serial.println("Color detectado: AZUL");
               ejecutaLedRGB(0, 0, 255); // Azul
+              return 6;
             }
           } else {
             Serial.println("Color detectado: MORADO");
             ejecutaLedRGB(255, 0, 255); // Morado
+            return 5;
           }
         } else {
           Serial.println("Color detectado: ROJO");
           ejecutaLedRGB(255, 0, 0); // Rojo
+          return 0;
         }
       }
     }
