@@ -27,6 +27,10 @@
     float prevError;
   // Pista C
     int colores[7];
+     float wallI = 0;
+    float wallprevError = 0;
+    float wallDer = 0;
+    bool turned = false;
     /*
     0 = rojo
     1 = verde
@@ -285,7 +289,7 @@
     double RightError = 0;
     while (LeftPulses < blockDist || RightPulses < blockDist) {
       RightError = (blockDist - RightPulses);
-      RightError = RightError / (float)(blockDist);
+      RightError = RightError*0.8 / (float)(blockDist);
       //El error puede ser cambiado entre calcular la distancia hacia la pared o nomas con los encoders
       RightError = RightError < 0.4 && RightError > 0 ? 0.4 : RightError;
      // Serial.print("L:\t");Serial.print(LeftPulses);Serial.print("\tR:\t");Serial.println(RightPulses);
@@ -295,34 +299,23 @@
    // Serial.print("L:\t");Serial.print(LeftPulses);Serial.print("\tR:\t");Serial.println(RightPulses);
   }
 
-  void FollowWall(char side, int dist) {
-    LeftPulses = 0;
-    RightPulses = 0;
-    int blockDist = dist / 3.14 / 6.75 * (float)pulses_per_turn;
-    float wallI = 0;
-    float wallprevError = 0;
-    float wallDer = 0;
+  void FollowWall(char side) {
+
+   while(1){
     int dir = side == 'r' ? -1 : 1;
-    float RightError;
-    while (LeftPulses < blockDist || RightPulses < blockDist) {
       float error = side == 'r' ? RightDistance() : LeftDistance();
       int par = FrontDistance();
-      if(error > MAX_WAL_DIST){return;}
-      if(par < MAX_FRONT_DIST){return;}
+      if(error > MAX_WAL_DIST){Drive(0,0);return;}
+      if(par < MAX_FRONT_DIST){Drive(0,0);return;}
       error = error ? error : -1;
       error = MAX_WAL_DIST/2 - error;
       wallI += error;
       wallI = error * wallI < 0 ? 0 : wallI;
       wallDer = error - wallprevError;
       float kin = error * wallkp + wallI * wallki + wallDer*wallkd;
-      RightError = (blockDist - RightPulses);
-      RightError = RightError / (float)(blockDist);
-      //El error puede ser cambiado entre calcular la distancia hacia la pared o nomas con los encoders
-      RightError = RightError < 0.4 && RightError > 0 ? 0.4 : RightError;
       //Serial.print("L:\t");Serial.print(LeftPulses);Serial.print("\tR:\t");Serial.println(RightPulses);
-      Drive(RightError + kin *dir*RightError, RightError - kin *dir* RightError);
-    }
-    Drive(0, 0);
+      Drive(0.6 + kin *dir, 0.6 - kin *dir);}
+
     
   }
 
@@ -330,7 +323,7 @@
     LeftPulses = 0;
     RightPulses = 0;
     int direction = input == 'r' ? 1 : -1;
-    float distance = 16;
+    float distance = 17;
     float RightError;
     while (RightPulses < distance) {
       RightError = (distance - RightPulses);
@@ -345,7 +338,7 @@
   void UTurn() {
     LeftPulses = 0;
     RightPulses = 0;
-    while (RightPulses < 41) {
+    while (RightPulses < 35) {
       Drive(0.7, -0.7);
     }
     Drive(0, 0);
@@ -364,7 +357,7 @@
       d = error - prevError;
       prevError = error;
       float total = kp * p + ki * i + kd * d;
-      Drive(0.8 + total, 0.8 - total);
+      Drive(0.6 + total, 0.6 - total);
     }
 
 // Algoritmo para Resolver Pista A
@@ -480,17 +473,20 @@
     int rightDistance = RightDistance();
     int leftDistance = LeftDistance();
     int frontDistance = FrontDistance();
+
     Serial.print(rightDistance); Serial.print(leftDistance);Serial.println(frontDistance);
-      if(rightDistance <= MAX_WAL_DIST && frontDistance >= MAX_FRONT_DIST){
-          ejecutaLedRGB(0,0,150);
-          FollowWall('r', DistBetweenBlock);
-      }
-      else if(rightDistance > MAX_WAL_DIST){
+    if(rightDistance > MAX_WAL_DIST ){
         ejecutaLedRGB(0,150,150);
+        GoFront(3);
           Turn('r');
           delay(1000);
           GoFront(DistBetweenBlock);
-      }else if (leftDistance > MAX_WAL_DIST){
+          turned = true;
+    }else if(frontDistance > MAX_FRONT_DIST ){
+          ejecutaLedRGB(0,0,150);
+          FollowWall('r');
+          turned = false;
+      }else if (leftDistance > MAX_WAL_DIST ){
         ejecutaLedRGB(0,150,0);
           Turn('l');
           delay(1000);
@@ -498,8 +494,10 @@
       }else{
         ejecutaLedRGB(150,0,150);
           UTurn();
-          GoFront(DistanceBetweenBlock);
+          GoFront(DistBetweenBlock);
+          turned = false;
       }
+      Drive(0,0);
       delay(2000);
       ejecutaLedRGB(250,250,250);
   }
@@ -547,9 +545,14 @@ void setup() {
 }
 
 void loop() {
-  RightHandSolver();
- // FollowWall('r', 50);
-  delay(2000);
+
+  PIDLinea();
+  //RightHandSolver();
+  // FollowWall('r', 50);
+  //FollowWall('r', 50);
+  /*UTurn();
+  GoFront(22);
+  delay(2000);*/
   //leeSensorRGB();
 
 

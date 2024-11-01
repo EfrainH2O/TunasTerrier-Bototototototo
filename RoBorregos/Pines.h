@@ -42,13 +42,13 @@
 // - Servo
   #define servoLeft 10
 // - PID
-  const float kp = 0.55;
+  const float kp = 0.45;
   const float ki = 0.0003;
-  const float kd = 0.5;
+  const float kd = 0.6;
 // - Wall PID
   const float wallkp = 0.6;
   const float wallki = 0.001;
   const float wallkd = 0.3;
-  const int MAX_WAL_DIST = 15;
-  const int MAX_FRONT_DIST = 15;
-  const int DistBetweenBlock = 30;
+  const int MAX_WAL_DIST = 19;
+  const int MAX_FRONT_DIST = 4;
+  const int DistBetweenBlock = 17;
