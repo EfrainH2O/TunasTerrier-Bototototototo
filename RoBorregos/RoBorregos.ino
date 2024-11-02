@@ -20,6 +20,7 @@
     int mainSensor = 1;
     bool Ball = false;
     char Color;
+    bool finished = false;
   // Pista B
     float p;
     float i;
@@ -180,13 +181,13 @@
     analogWrite(ledAzul, B);   // Pasar el valor obtenido de AZUL al led RGB
   }
 
-  long findDistance(int triggerPin, int echoPin) {
+  double findDistance(int triggerPin, int echoPin) {
     pinMode(triggerPin, OUTPUT);
     digitalWrite(triggerPin, HIGH);
     delayMicroseconds(5);
     digitalWrite(triggerPin, LOW);
     pinMode(echoPin, INPUT);
-    long distance = pulseIn(echoPin, HIGH, 50000) / 58.2;
+    double distance = (double)pulseIn(echoPin, HIGH, 50000) / 58.2;
     return distance;
   }
 
@@ -272,13 +273,13 @@
   }
 
   // Ultrasonic sensors
-    long FrontDistance() {
+    double FrontDistance() {
       return findDistance(FrontDistSensorTrigger, FrontDistSensorEcho);
     }
-    long LeftDistance() {
+    double LeftDistance() {
       return findDistance(LeftDistSensorTrigger, LeftDistSensorEcho);
     }
-    long RightDistance() {
+    double RightDistance() {
       return findDistance(RightDistSensorTrigger, RightDistSensorEcho);
     }
 
@@ -300,21 +301,25 @@
   }
 
   void FollowWall(char side) {
-
+    wallI = 0;
+    wallprevError = 0;
    while(1){
     int dir = side == 'r' ? -1 : 1;
-      float error = side == 'r' ? RightDistance() : LeftDistance();
-      int par = FrontDistance();
-      if(error > MAX_WAL_DIST){Drive(0,0);return;}
-      if(par < MAX_FRONT_DIST){Drive(0,0);return;}
-      error = error ? error : -1;
-      error = MAX_WAL_DIST/2 - error;
-      wallI += error;
-      wallI = error * wallI < 0 ? 0 : wallI;
-      wallDer = error - wallprevError;
-      float kin = error * wallkp + wallI * wallki + wallDer*wallkd;
-      //Serial.print("L:\t");Serial.print(LeftPulses);Serial.print("\tR:\t");Serial.println(RightPulses);
-      Drive(0.6 + kin *dir, 0.6 - kin *dir);}
+    float error = side == 'r' ? RightDistance() : LeftDistance();
+    float par = FrontDistance();
+    if(error > MAX_WAL_DIST+1){Drive(0,0);return;}
+    if(par < MAX_FRONT_DIST){Drive(0,0);return;}
+    error = error ? error : -1;
+    error = MAX_WAL_DIST/2 - error;
+    wallI += error;
+    wallI = error * wallI < 0 ? 0 : wallI;
+    wallDer = error - wallprevError;
+    wallprevError = error;
+    float kin = error * wallkp + wallI * wallki + wallDer*wallkd;
+    float right = 0.5 + kin *dir < 0 ? 0.2 : 0.5 + kin *dir;
+    float left = 0.5 - kin *dir < 0 ? 0.2 : 0.5 - kin *dir;
+    Serial.print("L:\t");Serial.print(LeftPulses);Serial.print("\tR:\t");Serial.println(RightPulses);
+    Drive(right ,left );}
 
     
   }
@@ -323,16 +328,7 @@
     LeftPulses = 0;
     RightPulses = 0;
     int direction = input == 'r' ? 1 : -1;
-    float distance = 17;
-    float RightError;
-    while (RightPulses < distance) {
-      RightError = (distance - RightPulses);
-      RightError = RightError / distance;
-      //El error puede ser cambiado entre calcular la distancia hacia la pared o nomas con los encoders
-      RightError = RightError < 0.5 && RightError > 0 ? 0.5 : RightError;
-      Drive( direction * RightError, -RightError * direction);
-    }
-    Drive(0, 0);     
+    
   }
 
   void UTurn() {
@@ -346,18 +342,20 @@
 
 // Algoritmo para Resolver Pista B
   // PID
+  float prevprevError;
     void PIDLinea() {
       UpdateInfraRedSensors();
       float error = -2 * InfraRedValues[0] - 1 * InfraRedValues[1] + 1 * InfraRedValues[3] + 2 * InfraRedValues[4];
-      error = error == 0 ? prevError : error;
+      error = error == 0 ? prevprevError : error;
       error = InfraRedValues[2] ? 0 : error;
       p = error;
       i += error;
       i = error * i < 0 ? 0 : i;
       d = error - prevError;
+      prevprevError = prevError;
       prevError = error;
       float total = kp * p + ki * i + kd * d;
-      Drive(0.6 + total, 0.6 - total);
+      Drive(0.55 + total, 0.55 - total);
     }
 
 // Algoritmo para Resolver Pista A
@@ -421,17 +419,10 @@
 
   // Secuencia para capturar la pelota y ubicar al robot en su posicion previa
     void catchBall() {
-      while (IsBall() == false) { Drive(-1, -1); }
+      while (IsBall() == false) { Drive(-0.5, -0.5); }
       Ball = true;
       ActivateServos();
       GoFront(25);
-      if (mainSensor == 1) {
-        Turn('r');
-        mainSensor = 2;
-      } else {
-        Turn('l');
-        mainSensor = 1;
-      }
     }
 
   // Secuencia para terminar el laberinto
@@ -444,6 +435,61 @@
         Color = 'g';
       }
     }
+// Por si acaso
+  void FollowBothWall(){
+    GoFront(26);
+    Turn('r');
+    GoFront(15);
+    char main_sensor = 'l';
+    char wall_sensor = 'r';
+    while(!finished){
+      if(DetectLine()){
+        UTurn();
+        main_sensor = 'r';
+        wall_sensor = 'l';
+      }
+      int ballDist = main_sensor == 'l' ? LeftDistance() : RightDistance();
+      int wallDist = wall_sensor == 'l' ? LeftDistance() : RightDistance();
+      int frontDist = FrontDistance();
+      //is ball in that place ?
+      if(ballDist > MAX_WAL_DIST && ballDist < 50 && !Ball ){
+
+        //CATCH
+        Turn(wall_sensor);
+        catchBall();
+        Turn(main_sensor);
+      }
+      //cant continue because of a wall?, check if can turn towards the ball
+      else if(ballDist > MAX_WAL_DIST && frontDist < MAX_FRONT_DIST){
+        //turn towards the wall
+        Turn(main_sensor);
+      }
+      // did you find the exit and have a ball?
+      else if(Ball && wallDist < MAX_WAL_DIST){
+        //exit
+        Turn(wall_sensor);
+        GoFront(20);
+        break;
+      }
+      // can you follow the wall
+      else if(wallDist < MAX_WAL_DIST){
+        //follow wall
+        FollowWall(wall_sensor);
+      }
+      // you cant follow one, try the other
+      else if(ballDist < MAX_WAL_DIST){
+        //follow the other wall
+        FollowWall(main_sensor);
+      }
+      //neather?
+      else{
+        //bruh
+        GoFront(5);
+      }
+    }
+      
+  finished = true;
+  }
 
   // Resolucion de Pista A
     void resuelveLaberinto() {
@@ -477,7 +523,7 @@
     Serial.print(rightDistance); Serial.print(leftDistance);Serial.println(frontDistance);
     if(rightDistance > MAX_WAL_DIST ){
         ejecutaLedRGB(0,150,150);
-        GoFront(3);
+        GoFront(6);
           Turn('r');
           delay(1000);
           GoFront(DistBetweenBlock);
@@ -547,9 +593,11 @@ void setup() {
 void loop() {
 
   PIDLinea();
+  //FollowBothWall();
+  //Turn('r');
+  //delay(2000);
+  //FollowWall('r');
   //RightHandSolver();
-  // FollowWall('r', 50);
-  //FollowWall('r', 50);
   /*UTurn();
   GoFront(22);
   delay(2000);*/
