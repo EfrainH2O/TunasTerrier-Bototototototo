@@ -291,19 +291,23 @@
     }
 
   void GoFront(double dist) {
-    LeftPulses = 0;
-    RightPulses = 0;
-    int blockDist = dist / 3.14 / 6.75 * (float)pulses_per_turn;  //Ponemos operaciones para ponerlo en terminos de bloques
-    double RightError = 0;
-    while (LeftPulses < blockDist || RightPulses < blockDist) {
-      RightError = (blockDist - RightPulses);
-      RightError = RightError*0.8 / (float)(blockDist);
+    float distError = FrontDistance();
+    float objective = distError-dist;  //Ponemos operaciones para ponerlo en terminos de bloques
+    objective = objective < 0 ? 0 : objective;
+    float start = distError;
+    while (distError-1 > objective) {
+      distError = FrontDistance();
+      float percentage = distError;
+      percentage = (-objective +distError)*0.8 / (start-objective);
       //El error puede ser cambiado entre calcular la distancia hacia la pared o nomas con los encoders
-      RightError = RightError < 0.4 && RightError > 0 ? 0.4 : RightError;
-     // Serial.print("L:\t");Serial.print(LeftPulses);Serial.print("\tR:\t");Serial.println(RightPulses);
-      Drive(RightError, RightError);
+      percentage = percentage < 0.4 ? 0.4 : percentage;
+     Serial.print("Start:\t");Serial.print(start);Serial.print("\tobjective:\t");Serial.print(objective);
+     Serial.print("\tdistError:\t");Serial.print(distError);Serial.print("\tpercen:\t");Serial.println(percentage);
+
+      Drive(percentage, percentage);
     }
     Drive(0, 0);
+    return;
    // Serial.print("L:\t");Serial.print(LeftPulses);Serial.print("\tR:\t");Serial.println(RightPulses);
   }
 
@@ -332,15 +336,20 @@
   }
 
   void Turn(char input) {
-    angle = 0;
+    LeftPulses = 0;
+    RightPulses = 0;
     int direction = input == 'r' ? 1 : -1;
-    while(angle < 3.5){
-      ActuAngule();
-      Drive(7, -7);
+    float distance = 16;
+    float distance = 17;
+    float RightError;
+    while (RightPulses < distance) {
+      RightError = (distance - RightPulses);
+      RightError = RightError / distance;
+      //El error puede ser cambiado entre calcular la distancia hacia la pared o nomas con los encoders
+      RightError = RightError < 0.5 && RightError > 0 ? 0.5 : RightError;
+      Drive( direction * RightError, -RightError * direction);
     }
-    Drive(0,0);
-    delay(1000);
-    
+    Drive(0, 0);     
   }
 
   void UTurn() {
@@ -405,7 +414,7 @@
     }
 
   // Secuencia para terminar el laberinto
-    void endMaze(sensor) {
+    void endMaze(char sensor) {
       while (FrontDistance() > MAX_FRONT_DIST){ Drive(0.5, 0.5); }
       Drive(0,0);
       if (leeSensorRGB() == 0){
@@ -553,9 +562,9 @@ void loop() {
   //delay(2000);
   //FollowWall('r');
   //RightHandSolver();
-  /*UTurn();
+  //UTurn();
   GoFront(22);
-  delay(2000);*/
+  delay(2000);
   //leeSensorRGB();
 
 }
