@@ -496,10 +496,14 @@
           Turn('r');
           delay(1000);
           GoFront(DistBetweenBlock);
-      }else{
+      }else if(leftDistance > MAX_WAL_DIST ){
           Turn('l');
           delay(1000);
           GoFront(DistBetweenBlock);
+      }else{
+          UTurn();
+          GoFront(DistBetweenBlock);
+          turned = false;
       }
     }
     else if(rightDistance > MAX_WAL_DIST ){
