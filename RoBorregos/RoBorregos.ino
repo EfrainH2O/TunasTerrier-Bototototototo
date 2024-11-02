@@ -1,5 +1,14 @@
+#include <GY_61.h>
+
+#include <GY_61.h>
+
 // Pre SetUp
   #include "Pines.h"
+  //Gyroscopio
+    #include <GY_61.h>
+    GY_61 gyro;
+    long prevTime;
+    double angle = 0;
   // Small Color Sensor
     #include <Wire.h>
     #include "Adafruit_TCS34725.h"
@@ -323,9 +332,14 @@
   }
 
   void Turn(char input) {
-    LeftPulses = 0;
-    RightPulses = 0;
+    angle = 0;
     int direction = input == 'r' ? 1 : -1;
+    while(angle < 3.5){
+      ActuAngule();
+      Drive(7, -7);
+    }
+    Drive(0,0);
+    delay(1000);
     
   }
 
@@ -337,6 +351,30 @@
     }
     Drive(0, 0);
   }
+
+  void ActuAngule(){
+    float y;
+    float x;
+    for(int i = 0; i < 120; i++){
+      y +=  gyro.ready();
+      y = y /2;
+      x += gyro.readx();
+      x = x/2;
+    }
+    y = y >0 ? y : -y ;
+
+    long delta = (millis() - prevTime);
+    //Serial.println((double)delta/1000);
+    prevTime = millis();
+
+    if(x > 0){
+      angle += sqrt(y/8.1) * (double)delta/1000;
+    }else{
+      angle -= sqrt( y/8.1) * (double)delta/1000;
+    }
+  
+  }
+  
 
 // Algoritmo para Resolver Pista B
   // PID
@@ -504,10 +542,12 @@ void setup() {
     Lservo.write(-20);
     delay(1000);
     Lservo.detach();
+  // Gyro
+    gyro = GY_61(pinX, pinY, pinZ);
 }
 
 void loop() {
-  PIDLinea();
+
   //FollowBothWall();
   //Turn('r');
   //delay(2000);
@@ -517,4 +557,5 @@ void loop() {
   GoFront(22);
   delay(2000);*/
   //leeSensorRGB();
+
 }

@@ -41,6 +41,10 @@
   int InfraRedSensors[] = {22, 24, 26, 28, 30};
 // - Servo
   #define servoLeft 10
+// - Gyro
+  #define pinX A13
+  #define pinY A14
+  #define pinZ A15
 // - PID
   const float kp = 0.5;
   const float ki = 0.0012;
