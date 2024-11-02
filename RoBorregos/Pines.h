@@ -55,4 +55,4 @@
   const float wallkd = 0.45;
   const int MAX_WAL_DIST = 20;
   const int MAX_FRONT_DIST = 4;
-  const int DistBetweenBlock = 17;
+  const int DistBetweenBlock = 30;

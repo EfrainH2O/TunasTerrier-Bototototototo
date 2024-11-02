@@ -311,10 +311,13 @@
    // Serial.print("L:\t");Serial.print(LeftPulses);Serial.print("\tR:\t");Serial.println(RightPulses);
   }
 
-  void FollowWall(char side) {
+  void FollowWall(char side, float dist) {
+    float distError = FrontDistance();
+    float objective = distError-dist;  //Ponemos operaciones para ponerlo en terminos de bloques
+    objective = objective < 0 ? 0 : objective;
     wallI = 0;
     wallprevError = 0;
-   while(1){
+   while(distError-1 > objective){
     int dir = side == 'r' ? -1 : 1;
     float error = side == 'r' ? RightDistance() : LeftDistance();
     float par = FrontDistance();
@@ -330,7 +333,9 @@
     float right = 0.5 + kin *dir < 0 ? 0.2 : 0.5 + kin *dir;
     float left = 0.5 - kin *dir < 0 ? 0.2 : 0.5 - kin *dir;
     Serial.print("L:\t");Serial.print(LeftPulses);Serial.print("\tR:\t");Serial.println(RightPulses);
-    Drive(right ,left );}
+    Drive(right ,left );
+    }
+    Drive(0,0);
 
     
   }
@@ -340,7 +345,6 @@
     RightPulses = 0;
     int direction = input == 'r' ? 1 : -1;
     float distance = 16;
-    float distance = 17;
     float RightError;
     while (RightPulses < distance) {
       RightError = (distance - RightPulses);
@@ -462,18 +466,19 @@
         // can you follow the wall
         else if(wallDist < MAX_WAL_DIST){
           //follow wall
-          FollowWall(wall_sensor);
+          FollowWall(wall_sensor, DistBetweenBlock);
         }
         // you cant follow one, try the other
         else if(ballDist < MAX_WAL_DIST){
           //follow the other wall
-          FollowWall(main_sensor);
+          FollowWall(main_sensor, DistBetweenBlock);
         }
         //neather?
         else{
           //bruh
-          GoFront(5);
+          GoFront(DistBetweenBlock);
         }
+        leeSensorRGB();
       }
     }
 
@@ -484,31 +489,39 @@
     int frontDistance = FrontDistance();
 
     Serial.print(rightDistance); Serial.print(leftDistance);Serial.println(frontDistance);
-    if(rightDistance > MAX_WAL_DIST ){
-        ejecutaLedRGB(0,150,150);
-        GoFront(6);
+    if(DetectLine()){
+      Drive(-0.5,-0.5);
+      delay(500);
+      if(rightDistance > MAX_WAL_DIST ){
+          Turn('r');
+          delay(1000);
+          GoFront(DistBetweenBlock);
+      }else{
+          Turn('l');
+          delay(1000);
+          GoFront(DistBetweenBlock);
+      }
+    }
+    else if(rightDistance > MAX_WAL_DIST ){
+          GoFront(6);
           Turn('r');
           delay(1000);
           GoFront(DistBetweenBlock);
           turned = true;
     }else if(frontDistance > MAX_FRONT_DIST ){
-          ejecutaLedRGB(0,0,150);
-          FollowWall('r');
+          FollowWall('r', DistBetweenBlock);
           turned = false;
       }else if (leftDistance > MAX_WAL_DIST ){
-        ejecutaLedRGB(0,150,0);
           Turn('l');
           delay(1000);
           GoFront(DistBetweenBlock);
       }else{
-        ejecutaLedRGB(150,0,150);
           UTurn();
           GoFront(DistBetweenBlock);
           turned = false;
       }
       Drive(0,0);
       delay(2000);
-      ejecutaLedRGB(250,250,250);
   }
 
 void setup() {
