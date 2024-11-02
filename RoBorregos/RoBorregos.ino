@@ -124,45 +124,33 @@
   }
 
   int DecisionTreeRGB(int R, int G, int B) {
-    if (G >= 239) {
-      Serial.println("Color detectado: AMARILLO");
-      ejecutaLedRGB(255, 255, 0); // Amarillo
-      return 2;
+    if (B >= 221){
+      if (B >= 226){
+        Serial.println("Color detectado: MORADO");
+        ejecutaLedRGB(255, 0, 255);
+        return 5;
+      } else {
+        Serial.println("Color detectado: ROSA");
+        ejecutaLedRGB(255, 175, 255);
+        return 4;
+      }
     } else {
-      if (R >= 245) {
-        if (B >= 200) {
-          Serial.println("Color detectado: ROSA");
-          ejecutaLedRGB(255, 128, 255); // Rosa
-          return 4;
+      if (B >= 164){
+        if (R <= 220){
+          Serial.println("Color detectado: GREEN");
+          ejecutaLedRGB(0, 255, 0);
+          return 1;
         } else {
-          Serial.println("Color detectado: NARANJA");
-          ejecutaLedRGB(255, 75, 0); // Naranja
-          return 3;
+          Serial.println("Color detectado: AMARILLO");
+          ejecutaLedRGB(255, 255, 0);
+          return 2;
         }
       } else {
-        if (B >= 174) {
-          if (B >= 188) {
-            if (B >= 245) {
-              Serial.println("Color detectado: MORADO");
-              ejecutaLedRGB(255, 0, 255); // Morado
-              return 5;
-            } else {
-              Serial.println("Color detectado: AZUL");
-              ejecutaLedRGB(0, 0, 255); // Azul
-              return 6;
-            }
-          } else {
-            Serial.println("Color detectado: MORADO");
-            ejecutaLedRGB(255, 0, 255); // Morado
-            return 5;
-          }
-        } else {
-          Serial.println("Color detectado: ROJO");
-          ejecutaLedRGB(255, 0, 0); // Rojo
-          return 0;
-        }
+        Serial.println("Color detectado: ROJO");
+        ejecutaLedRGB(255, 0, 0);
+        return 0;
       }
-    }
+    } 
   }
 
   int getRGBPW(int color) {
@@ -297,6 +285,7 @@
     float start = distError;
     while (distError-1 > objective) {
       distError = FrontDistance();
+      if(DetectLine()){Drive(0,0);return;}
       float percentage = distError;
       percentage = (-objective +distError)*0.8 / (start-objective);
       //El error puede ser cambiado entre calcular la distancia hacia la pared o nomas con los encoders
@@ -306,7 +295,6 @@
 
       Drive(percentage, percentage);
     }
-    Drive(0, 0);
     return;
    // Serial.print("L:\t");Serial.print(LeftPulses);Serial.print("\tR:\t");Serial.println(RightPulses);
   }
@@ -314,15 +302,19 @@
   void FollowWall(char side, float dist) {
     float distError = FrontDistance();
     float objective = distError-dist;  //Ponemos operaciones para ponerlo en terminos de bloques
-    objective = objective < 0 ? 0 : objective;
+    objective = objective < 0 ? distError-1 : objective;
     wallI = 0;
     wallprevError = 0;
-   while(distError-1 > objective){
+   while(distError > objective+1){
+    distError = FrontDistance();
+    Serial.print("\tobjective:\t");Serial.print(objective);
+     Serial.print("\tdistError:\t");Serial.print(distError);
     int dir = side == 'r' ? -1 : 1;
     float error = side == 'r' ? RightDistance() : LeftDistance();
-    float par = FrontDistance();
+
+    if(DetectLine()){Drive(0,0);return;}
     if(error > MAX_WAL_DIST+1){Drive(0,0);return;}
-    if(par < MAX_FRONT_DIST){Drive(0,0);return;}
+    if(distError < MAX_FRONT_DIST){Drive(0,0);return;}
     error = error ? error : -1;
     error = MAX_WAL_DIST/2 - error;
     wallI += error;
@@ -335,7 +327,6 @@
     Serial.print("L:\t");Serial.print(LeftPulses);Serial.print("\tR:\t");Serial.println(RightPulses);
     Drive(right ,left );
     }
-    Drive(0,0);
 
     
   }
@@ -344,14 +335,10 @@
     LeftPulses = 0;
     RightPulses = 0;
     int direction = input == 'r' ? 1 : -1;
-    float distance = 16;
+    float distance = 40;
     float RightError;
     while (RightPulses < distance) {
-      RightError = (distance - RightPulses);
-      RightError = RightError / distance;
-      //El error puede ser cambiado entre calcular la distancia hacia la pared o nomas con los encoders
-      RightError = RightError < 0.5 && RightError > 0 ? 0.5 : RightError;
-      Drive( direction * RightError, -RightError * direction);
+      Drive( direction * 0.55, -0.55 * direction);
     }
     Drive(0, 0);     
   }
@@ -404,17 +391,18 @@
       prevprevError = prevError;
       prevError = error;
       float total = kp * p + ki * i + kd * d;
-      Drive(0.55 + total, 0.55 - total);
+      Drive(0.65 + total, 0.65 - total);
     }
 
 // Algoritmo para Resolver Pista A
   // Secuencia para capturar la pelota y ubicar al robot en su posicion previa
     void catchBall() {
-      while (IsBall() == false) { Drive(-0.5, -0.5); }
+      while (LeftDistance() >= MAX_WAL_DIST/2 || RightDistance() >= MAX_WAL_DIST/2) { Drive(-0.5, -0.5); }
       Drive(0,0);
       Ball = true;
       ActivateServos();
-      GoFront(25);
+      while (LeftDistance() <= MAX_WAL_DIST/2 || RightDistance() <= MAX_WAL_DIST/2) { Drive(0.5, 0.5); }
+      Drive(0,0);
     }
 
   // Secuencia para terminar el laberinto
@@ -431,16 +419,18 @@
     }
   // Secuencia completa para resolver el laberinto
     void FollowBothWall(){
-      GoFront(26);
+
+      GoFront(30);
       Turn('r');
-      GoFront(15);
+      GoFront(DistBetweenBlock);
       char main_sensor = 'l';
       char wall_sensor = 'r';
       while(!finished){
         if(DetectLine()){
           UTurn();
-          main_sensor = 'r';
-          wall_sensor = 'l';
+          char temp = main_sensor;
+          main_sensor = wall_sensor;
+          wall_sensor = temp;
         }
         int ballDist = main_sensor == 'l' ? LeftDistance() : RightDistance();
         int wallDist = wall_sensor == 'l' ? LeftDistance() : RightDistance();
@@ -453,32 +443,37 @@
           Turn(main_sensor);
         }
         //cant continue because of a wall?, check if can turn towards the ball
-        else if(ballDist > MAX_WAL_DIST && frontDist < MAX_FRONT_DIST){
+        else if(ballDist > MAX_WAL_DIST && frontDist <= MAX_FRONT_DIST){
           //turn towards the wall
           Turn(main_sensor);
+          ejecutaLedRGB(0,0,255);
         }
         // did you find the exit and have a ball?
-        else if(Ball && wallDist < MAX_WAL_DIST){
+        else if(Ball && wallDist <= MAX_WAL_DIST){
           //exit
           Turn(wall_sensor);
           endMaze(wall_sensor);
+          ejecutaLedRGB(0,255,255);
         }
         // can you follow the wall
         else if(wallDist < MAX_WAL_DIST){
           //follow wall
           FollowWall(wall_sensor, DistBetweenBlock);
+          ejecutaLedRGB(255,0,255);
         }
         // you cant follow one, try the other
         else if(ballDist < MAX_WAL_DIST){
           //follow the other wall
           FollowWall(main_sensor, DistBetweenBlock);
+          ejecutaLedRGB(255,0,0);
         }
         //neather?
         else{
           //bruh
           GoFront(DistBetweenBlock);
+          ejecutaLedRGB(0,255,0);
         }
-        leeSensorRGB();
+        delay(2000);
       }
     }
 
@@ -489,7 +484,7 @@
     int frontDistance = FrontDistance();
 
     Serial.print(rightDistance); Serial.print(leftDistance);Serial.println(frontDistance);
-    if(DetectLine()){
+    /*if(DetectLine()){
       Drive(-0.5,-0.5);
       delay(500);
       if(rightDistance > MAX_WAL_DIST ){
@@ -505,8 +500,8 @@
           GoFront(DistBetweenBlock);
           turned = false;
       }
-    }
-    else if(rightDistance > MAX_WAL_DIST ){
+    }*/
+    if(rightDistance > MAX_WAL_DIST ){
           GoFront(6);
           Turn('r');
           delay(1000);
@@ -525,7 +520,8 @@
           turned = false;
       }
       Drive(0,0);
-      delay(2000);
+      leeSensorRGB();
+      delay(1000);
   }
 
 void setup() {
@@ -573,15 +569,18 @@ void setup() {
 }
 
 void loop() {
-
+  //PIDLinea();
   //FollowBothWall();
-  //Turn('r');
+  //Turn('l');
   //delay(2000);
   //FollowWall('r');
-  //RightHandSolver();
+  RightHandSolver();
   //UTurn();
-  GoFront(22);
-  delay(2000);
+  //FollowBothWall();
   //leeSensorRGB();
+  //catchBall();
+  //Drive(1,1);
+  //leeSensorRGB();
+  //delay(1000);
 
 }
