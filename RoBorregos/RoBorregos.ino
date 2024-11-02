@@ -281,20 +281,21 @@
   void GoFront(double dist) {
     float distError = FrontDistance();
     float objective = distError-dist;  //Ponemos operaciones para ponerlo en terminos de bloques
-    objective = objective < 0 ? 0 : objective;
+    objective = objective < 0 ? 1 : objective;
     float start = distError;
-    while (distError-1 > objective) {
+    while (distError > objective) {
       distError = FrontDistance();
-      if(DetectLine()){Drive(0,0);return;}
+      //if(DetectLine()){Drive(0,0);return;}
       float percentage = distError;
       percentage = (-objective +distError)*0.8 / (start-objective);
       //El error puede ser cambiado entre calcular la distancia hacia la pared o nomas con los encoders
       percentage = percentage < 0.4 ? 0.4 : percentage;
      Serial.print("Start:\t");Serial.print(start);Serial.print("\tobjective:\t");Serial.print(objective);
      Serial.print("\tdistError:\t");Serial.print(distError);Serial.print("\tpercen:\t");Serial.println(percentage);
-
       Drive(percentage, percentage);
     }
+    
+    Drive(0,0);
     return;
    // Serial.print("L:\t");Serial.print(LeftPulses);Serial.print("\tR:\t");Serial.println(RightPulses);
   }
@@ -302,17 +303,16 @@
   void FollowWall(char side, float dist) {
     float distError = FrontDistance();
     float objective = distError-dist;  //Ponemos operaciones para ponerlo en terminos de bloques
-    objective = objective < 0 ? distError-1 : objective;
+    objective = objective < 0 ? 1 : objective;
     wallI = 0;
     wallprevError = 0;
-   while(distError > objective+1){
+   while(distError >= objective){
     distError = FrontDistance();
     Serial.print("\tobjective:\t");Serial.print(objective);
-     Serial.print("\tdistError:\t");Serial.print(distError);
+     Serial.print("\tdistError:\t");Serial.println(distError);
     int dir = side == 'r' ? -1 : 1;
     float error = side == 'r' ? RightDistance() : LeftDistance();
-
-    if(DetectLine()){Drive(0,0);return;}
+    //if(DetectLine()){Drive(0,0);return;}
     if(error > MAX_WAL_DIST+1){Drive(0,0);return;}
     if(distError < MAX_FRONT_DIST){Drive(0,0);return;}
     error = error ? error : -1;
@@ -324,9 +324,10 @@
     float kin = error * wallkp + wallI * wallki + wallDer*wallkd;
     float right = 0.5 + kin *dir < 0 ? 0.2 : 0.5 + kin *dir;
     float left = 0.5 - kin *dir < 0 ? 0.2 : 0.5 - kin *dir;
-    Serial.print("L:\t");Serial.print(LeftPulses);Serial.print("\tR:\t");Serial.println(RightPulses);
+    //Serial.print("L:\t");Serial.print(LeftPulses);Serial.print("\tR:\t");Serial.println(RightPulses);
     Drive(right ,left );
     }
+    Drive(0,0);
 
     
   }
@@ -335,10 +336,10 @@
     LeftPulses = 0;
     RightPulses = 0;
     int direction = input == 'r' ? 1 : -1;
-    float distance = 40;
+    float distance = 18;
     float RightError;
     while (RightPulses < distance) {
-      Drive( direction * 0.55, -0.55 * direction);
+      Drive( direction * 0.65, -0.65 * direction);
     }
     Drive(0, 0);     
   }
@@ -502,14 +503,12 @@
       }
     }*/
     if(rightDistance > MAX_WAL_DIST ){
-          GoFront(6);
+          GoFront(15);
           Turn('r');
           delay(1000);
           GoFront(DistBetweenBlock);
-          turned = true;
     }else if(frontDistance > MAX_FRONT_DIST ){
           FollowWall('r', DistBetweenBlock);
-          turned = false;
       }else if (leftDistance > MAX_WAL_DIST ){
           Turn('l');
           delay(1000);
@@ -520,7 +519,9 @@
           turned = false;
       }
       Drive(0,0);
-      leeSensorRGB();
+      if(leeSensorRGB()==0){
+        finished = true;
+      };
       delay(1000);
   }
 
@@ -573,14 +574,16 @@ void loop() {
   //FollowBothWall();
   //Turn('l');
   //delay(2000);
-  //FollowWall('r');
+  FollowWall('r', 30);
+  /*while(!finished){
   RightHandSolver();
+  }*/
   //UTurn();
   //FollowBothWall();
   //leeSensorRGB();
   //catchBall();
   //Drive(1,1);
   //leeSensorRGB();
-  //delay(1000);
+  delay(1000);
 
 }
