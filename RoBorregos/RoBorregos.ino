@@ -17,9 +17,7 @@
     #include <Servo.h>
     Servo Lservo;
   // Pista A
-    int mainSensor = 1;
     bool Ball = false;
-    char Color;
     bool finished = false;
   // Pista B
     float p;
@@ -359,159 +357,77 @@
     }
 
 // Algoritmo para Resolver Pista A
-  // Secuencia para resolver Pista A con "front" como sensor main
-    void movFrontSensor() {
-      if (FrontDistance() > 5) {
-        GoFront(25);
-      } else {
-        Turn('l');
-        GoFront(25);
-        mainSensor = 1;
-      }
-    }
-
-  // Secuencia para resolver Pista A con "right" como sensor main
-    void movRightSensor() {
-      if (RightDistance() > 5) {
-        if (FrontDistance() > 30) {
-          Turn('l');
-          if (Ball == false) {
-            catchBall();
-          } else {
-            endMaze();
-          }
-        } else {
-          Turn('r');
-          GoFront(25);
-        }
-      } else {
-        GoFront(25);
-      }
-    }
-
-  // Secuencia para resolver Pista A con "left" como sensor main
-    void movLeftSensor() {
-      if (LeftDistance() > 5) {
-        if (FrontDistance() > 30) {
-          Turn('r');
-          if (Ball == false) {
-            catchBall();
-          } else {
-            endMaze();
-          }
-        } else {
-          Turn('l');
-          GoFront(25);
-        }
-      } else {
-        GoFront(25);
-      }
-    }
-
-  // Secuencia para verificar y evitar la linea negra de la Pista A
-    void verfNegro() {
-      UpdateInfraRedSensors();
-      if (DetectLine()) {
-        UTurn();
-        mainSensor = (mainSensor == 1) ? 1 : 2;
-      }
-    }
-
   // Secuencia para capturar la pelota y ubicar al robot en su posicion previa
     void catchBall() {
       while (IsBall() == false) { Drive(-0.5, -0.5); }
+      Drive(0,0);
       Ball = true;
       ActivateServos();
       GoFront(25);
     }
 
   // Secuencia para terminar el laberinto
-    void endMaze() {
-      Drive(-1, -1);
-      if (leeSensorRGB() == 0) {
-        Color = 'r';
+    void endMaze(sensor) {
+      while (FrontDistance() > MAX_FRONT_DIST){ Drive(0.5, 0.5); }
+      Drive(0,0);
+      if (leeSensorRGB() == 0){
+        finished = true;
       } else {
-        GoFront(25);
-        Color = 'g';
-      }
-    }
-// Por si acaso
-  void FollowBothWall(){
-    GoFront(26);
-    Turn('r');
-    GoFront(15);
-    char main_sensor = 'l';
-    char wall_sensor = 'r';
-    while(!finished){
-      if(DetectLine()){
         UTurn();
-        main_sensor = 'r';
-        wall_sensor = 'l';
-      }
-      int ballDist = main_sensor == 'l' ? LeftDistance() : RightDistance();
-      int wallDist = wall_sensor == 'l' ? LeftDistance() : RightDistance();
-      int frontDist = FrontDistance();
-      //is ball in that place ?
-      if(ballDist > MAX_WAL_DIST && ballDist < 50 && !Ball ){
-
-        //CATCH
-        Turn(wall_sensor);
-        catchBall();
-        Turn(main_sensor);
-      }
-      //cant continue because of a wall?, check if can turn towards the ball
-      else if(ballDist > MAX_WAL_DIST && frontDist < MAX_FRONT_DIST){
-        //turn towards the wall
-        Turn(main_sensor);
-      }
-      // did you find the exit and have a ball?
-      else if(Ball && wallDist < MAX_WAL_DIST){
-        //exit
-        Turn(wall_sensor);
-        GoFront(20);
-        break;
-      }
-      // can you follow the wall
-      else if(wallDist < MAX_WAL_DIST){
-        //follow wall
-        FollowWall(wall_sensor);
-      }
-      // you cant follow one, try the other
-      else if(ballDist < MAX_WAL_DIST){
-        //follow the other wall
-        FollowWall(main_sensor);
-      }
-      //neather?
-      else{
-        //bruh
-        GoFront(5);
+        while (FrontDistance() > MAX_FRONT_DIST){ Drive(0.5, 0.5); }
+        Turn(sensor);
       }
     }
-      
-  finished = true;
-  }
-
-  // Resolucion de Pista A
-    void resuelveLaberinto() {
-      while (Ball == false) {  // Fase 1: Busqueda de pelota
-        verfNegro();
-        if (mainSensor == 0) {
-          movFrontSensor();
-        } else if (mainSensor == 1) {
-          movRightSensor();
-        } else {
-          movLeftSensor();
+  // Secuencia completa para resolver el laberinto
+    void FollowBothWall(){
+      GoFront(26);
+      Turn('r');
+      GoFront(15);
+      char main_sensor = 'l';
+      char wall_sensor = 'r';
+      while(!finished){
+        if(DetectLine()){
+          UTurn();
+          main_sensor = 'r';
+          wall_sensor = 'l';
+        }
+        int ballDist = main_sensor == 'l' ? LeftDistance() : RightDistance();
+        int wallDist = wall_sensor == 'l' ? LeftDistance() : RightDistance();
+        int frontDist = FrontDistance();
+        //is ball in that place ?
+        if(ballDist > MAX_WAL_DIST && ballDist < 50 && !Ball ){
+          //CATCH
+          Turn(wall_sensor);
+          catchBall();
+          Turn(main_sensor);
+        }
+        //cant continue because of a wall?, check if can turn towards the ball
+        else if(ballDist > MAX_WAL_DIST && frontDist < MAX_FRONT_DIST){
+          //turn towards the wall
+          Turn(main_sensor);
+        }
+        // did you find the exit and have a ball?
+        else if(Ball && wallDist < MAX_WAL_DIST){
+          //exit
+          Turn(wall_sensor);
+          endMaze(wall_sensor);
+        }
+        // can you follow the wall
+        else if(wallDist < MAX_WAL_DIST){
+          //follow wall
+          FollowWall(wall_sensor);
+        }
+        // you cant follow one, try the other
+        else if(ballDist < MAX_WAL_DIST){
+          //follow the other wall
+          FollowWall(main_sensor);
+        }
+        //neather?
+        else{
+          //bruh
+          GoFront(5);
         }
       }
-      while (Color != 'r') {  // Fase 2: Resolver el laberinto
-        verfNegro();
-        if (mainSensor == 1) {
-          movRightSensor();
-        } else {
-          movLeftSensor();
-        }
-      }
-      while (true) { Drive(0, 0); }
     }
 
 // Algoritmo Pista C
@@ -591,7 +507,6 @@ void setup() {
 }
 
 void loop() {
-
   PIDLinea();
   //FollowBothWall();
   //Turn('r');
@@ -602,6 +517,4 @@ void loop() {
   GoFront(22);
   delay(2000);*/
   //leeSensorRGB();
-
-
 }
